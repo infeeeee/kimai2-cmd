@@ -1,0 +1,26 @@
+{
+  "name": "kimai2-cmd",
+  "version": "1.0.0",
+  "description": "Command line client for Kimai2",
+  "main": "kimai2-cmd.js",
+  "scripts": {
+    "start": "node kimai2-cmd.js"
+  },
+  "keywords": [
+    "kimai2",
+    "command-line",
+    "timetracker",
+    "terminal"
+  ],
+  "author": "infeeeee",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^2.20.0",
+    "fuzzy": "^0.1.3",
+    "ini": "^1.3.5",
+    "inquirer": "^6.4.1",
+    "inquirer-autocomplete-prompt": "^1.0.1",
+    "moment": "^2.24.0",
+    "request": "^2.88.0"
+  }
+}
