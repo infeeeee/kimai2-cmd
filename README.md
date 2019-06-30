@@ -2,7 +2,7 @@
 
 Command line client for [Kimai2](https://www.kimai.org/), the open source, self-hosted time tracker.
 
-To use this program you have to install Kimai first!
+To use this program you have to install Kimai2 first!
 
 This client is still under developement, so no release and build, only developement version yet.
 
