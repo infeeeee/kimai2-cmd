@@ -22,5 +22,14 @@
     "inquirer-autocomplete-prompt": "^1.0.1",
     "moment": "^2.24.0",
     "request": "^2.88.0"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infeeeee/kimai2-cmd.git"
+  },
+  "bugs": {
+    "url": "https://github.com/infeeeee/kimai2-cmd/issues"
+  },
+  "homepage": "https://github.com/infeeeee/kimai2-cmd#readme"
 }
