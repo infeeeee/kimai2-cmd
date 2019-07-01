@@ -4,7 +4,7 @@ Command line client for [Kimai2](https://www.kimai.org/), the open source, self-
 
 To use this program you have to install Kimai2 first!
 
-This client is still under developement, so no release and build, only developement version yet.
+This client is still under developement. See planned features in the next section
 
 ## Current and planned features
 
@@ -26,7 +26,7 @@ Integration:
 
 ## Installation
 
-Download executable from releases
+Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest)
 
 ## Usage
 
