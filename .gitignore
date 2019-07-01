@@ -1,2 +1,4 @@
 settings.ini
 node_modules/
+builds/
+*.log

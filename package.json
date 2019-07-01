@@ -1,10 +1,12 @@
 {
   "name": "kimai2-cmd",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Command line client for Kimai2",
   "main": "kimai2-cmd.js",
+  "bin": "kimai2-cmd.js",
   "scripts": {
-    "start": "node kimai2-cmd.js"
+    "start": "node kimai2-cmd.js",
+    "build": "pkg --out-path builds package.json"
   },
   "keywords": [
     "kimai2",
@@ -31,5 +33,11 @@
   "bugs": {
     "url": "https://github.com/infeeeee/kimai2-cmd/issues"
   },
-  "homepage": "https://github.com/infeeeee/kimai2-cmd#readme"
+  "homepage": "https://github.com/infeeeee/kimai2-cmd#readme",
+  "pkg": {
+    "scripts": ["kimai2-cmd.js"],
+    "assets": [""],
+    "targets": ["node10-linux-x64", "node10-macos-x64", "node10-win-x64"]
+    
+  }
 }

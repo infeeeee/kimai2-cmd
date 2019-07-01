@@ -20,11 +20,23 @@ UI:
 - [ ] Classic terminal UI for integration 
 
 Integration:
-- [ ] Portable executable for all three platforms
+- [x] Portable executable for all three platforms
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
 - [ ] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac)
 
 ## Installation
+
+Download executable from releases
+
+## Usage
+
+Follow options in the terminal, currently only interactive UI
+
+On the first run it will ask for your settings
+
+## Developement version
+
+### Installation
 
 requirements:
 - node js
@@ -36,7 +48,24 @@ cd kimai2-cmd
 npm install
 ```
 
-## Usage
+### Build
+
+Requirements: globally installed [pkg](https://github.com/zeit/pkg): 
+
+```
+npm install pkg -g
+```
+
+Build x64 executables to linux, mac, win:
+
+```
+npm run build
+```
+
+For building for other platforms see pkg's documentation, or open an issue and I can build it for you.
+
+
+### Usage
 
 ```
 npm start
