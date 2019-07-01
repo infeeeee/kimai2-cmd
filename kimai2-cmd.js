@@ -28,7 +28,7 @@ function callKimaiApi(httpMethod, kimaimethod, serversettings, qs = false, reqbo
     //console.log("calling kimai:", httpMethod, kimaimethod, serversettings)
     return new Promise((resolve, reject) => {
         const options = {
-            url: serversettings.kimaiurl + '/api/' + kimaimethod,
+            url: sanitizeServerUrl(serversettings.kimaiurl) + '/api/' + kimaimethod,
             headers: {
                 'X-AUTH-USER': serversettings.username,
                 'X-AUTH-TOKEN': serversettings.password,
@@ -395,6 +395,10 @@ function askForSettings() {
                 resolve(settings)
             });
     })
+}
+
+function sanitizeServerUrl(kimaiurl) {
+    return kimaiurl.replace(/\/+$/, "");
 }
 
 (function startup() {
