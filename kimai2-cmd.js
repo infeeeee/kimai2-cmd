@@ -20,15 +20,39 @@ const ini = require('ini');
 //moment
 const moment = require('moment');
 
+//reading version number from package.json
+var pjson = require('./package.json');
+
 /* -------------------------------------------------------------------------- */
 /*                                  Functions                                 */
 /* -------------------------------------------------------------------------- */
 
-function callKimaiApi(httpMethod, kimaimethod, serversettings, qs = false, reqbody = false) {
-    //console.log("calling kimai:", httpMethod, kimaimethod, serversettings)
+/**
+ * Calls the kimai API
+ * 
+ * @param {string} httpMethod Http method: 'GET', 'POST', 'PATCH'...
+ * @param {string} kimaiMethod Endpoint to call on the kimai API: timesheet, activities, timesheets/123/stop
+ * @param {object} serversettings Serversettings section read from ini. Only serversettings, not the full settings!
+ * @param {object} options All of them are optional: 
+ * options.qs querystring
+ * options.reqbody request body
+ * options.verbose Verbose
+ * @returns {object} The redponse body as an object
+ * 
+ */
+function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) {
+    //default options to false:
+    const qs = options.qs || false
+    const reqbody = options.reqbody || false
+    const verbose = options.verbose || false
+
+    if (verbose) {
+        console.log("calling kimai:", httpMethod, kimaiMethod, serversettings)
+    }
+
     return new Promise((resolve, reject) => {
         const options = {
-            url: sanitizeServerUrl(serversettings.kimaiurl) + '/api/' + kimaimethod,
+            url: sanitizeServerUrl(serversettings.kimaiurl) + '/api/' + kimaiMethod,
             headers: {
                 'X-AUTH-USER': serversettings.username,
                 'X-AUTH-TOKEN': serversettings.password,
@@ -44,25 +68,40 @@ function callKimaiApi(httpMethod, kimaimethod, serversettings, qs = false, reqbo
             options.headers['Content-Type'] = 'application/json'
         }
 
-        // console.log("op: ", options)
+        if (verbose) {
+            console.log("request options:", options)
+        }
+
         request(options, (error, response, body) => {
             if (error) {
                 reject(error)
             }
 
             let jsonarr = JSON.parse(response.body)
+
+            if (verbose) {
+                console.log("Response body:", jsonarr)
+            }
+
             if (jsonarr.message) {
+                console.log('Server error message:')
+                console.log(jsonarr.code)
+                console.log(jsonarr.message)
                 reject(jsonarr.message)
             }
-            // console.log(jsonarr)
+
             resolve(jsonarr)
         })
-
     })
 }
 
-
-function mainMenu(settings) {
+/**
+ * Interactive ui: displays the main menu
+ * 
+ * @param {object} settings The full settings object read from the ini
+ * @param {boolean} verbose 
+ */
+function uiMainMenu(settings, verbose = false) {
     inquirer
         .prompt([
             {
@@ -87,50 +126,52 @@ function mainMenu(settings) {
             }
         ])
         .then(answers => {
-            // console.log(answers.mainmenu)
+            if (verbose) {
+                console.log('selected answer: ' + answers.mainmenu)
+            }
             switch (answers.mainmenu) {
                 case 'restart':
                     kimaiList(settings, 'timesheets/recent', false)
                         .then(res => {
-                            return selectMeasurement(res[1])
+                            return uiSelectMeasurement(res[1])
                         }).then(startId => {
                             return kimaiRestart(settings, startId)
                         })
-                        .then(res => mainMenu(res[0]))
+                        .then(res => uiMainMenu(res[0]))
                     break;
                 case 'start':
-                    kimaiStart(settings)
-                        .then(_ => mainMenu(settings))
+                    uiKimaiStart(settings, verbose)
+                        .then(_ => uiMainMenu(settings))
                     break;
                 case 'stop-all':
                     kimaiStop(settings, false)
-                        .then(_ => mainMenu(settings))
+                        .then(_ => uiMainMenu(settings))
                     break;
                 case 'stop':
                     kimaiList(settings, 'timesheets/active', false)
                         .then(res => {
-                            return selectMeasurement(res[1])
+                            return uiSelectMeasurement(res[1])
                         }).then(stopId => {
                             return kimaiStop(settings, stopId)
                         })
-                        .then(res => mainMenu(res[0]))
+                        .then(res => uiMainMenu(res[0]))
                     break;
 
                 case 'list-active':
-                    kimaiList(settings, 'timesheets/active', true)
-                        .then(res => mainMenu(res[0]))
+                    kimaiList(settings, 'timesheets/active', true, { verbose: verbose })
+                        .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-recent':
-                    kimaiList(settings, 'timesheets/recent', true)
-                        .then(res => mainMenu(res[0]))
+                    kimaiList(settings, 'timesheets/recent', true, { verbose: verbose })
+                        .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-projects':
-                    kimaiList(settings, 'projects', true)
-                        .then(res => mainMenu(res[0]))
+                    kimaiList(settings, 'projects', true, { verbose: verbose })
+                        .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-activities':
-                    kimaiList(settings, 'activities', true)
-                        .then(res => mainMenu(res[0]))
+                    kimaiList(settings, 'activities', true, { verbose: verbose })
+                        .then(res => uiMainMenu(res[0], verbose))
                     break;
                 default:
                     break;
@@ -138,6 +179,13 @@ function mainMenu(settings) {
         })
 }
 
+/**
+ * Restarts a measurement
+ * 
+ * @param {object} settings All settings read from ini
+ * @param {string} id The id of the measurement to restart
+ * 
+ */
 function kimaiRestart(settings, id) {
     return new Promise((resolve, reject) => {
         callKimaiApi('PATCH', 'timesheets/' + id + '/restart', settings.serversettings)
@@ -147,21 +195,26 @@ function kimaiRestart(settings, id) {
     })
 }
 
-function kimaiStart(settings) {
+/**
+ * Interactive ui: select a project and activity and starts it
+ * 
+ * @param {object} settings All settings read from ini
+ */
+function uiKimaiStart(settings, verbose = false) {
     return new Promise((resolve, reject) => {
         const selected = {}
         kimaiList(settings, 'projects', false)
             .then(res => {
                 // console.log(res[1])
-                return autoSelect(res[1], 'Select project')
+                return uiAutocompleteSelect(res[1], 'Select project')
             })
             .then(res => {
                 // console.log(res)
                 selected.projectId = res.id
-                return kimaiList(settings, 'activities', false, { project: res.id })
+                return kimaiList(settings, 'activities', false, { filter: { project: res.id } })
             })
             .then(res => {
-                return autoSelect(res[1], 'Select activity')
+                return uiAutocompleteSelect(res[1], 'Select activity')
             })
             .then(res => {
                 selected.activityId = res.id
@@ -170,10 +223,12 @@ function kimaiStart(settings) {
                     begin: moment().format(),
                     project: selected.projectId,
                     activity: selected.activityId
-
+                }
+                if (verbose){
+                    console.log("kimaistart calling api:", body)
                 }
 
-                return callKimaiApi('POST', 'timesheets', settings.serversettings, false, body)
+                return callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose:verbose })
             })
             .then(res => {
                 console.log('Started: ' + res.id)
@@ -182,7 +237,12 @@ function kimaiStart(settings) {
     })
 }
 
-
+/**
+ * Stops one or all current measurements. If id is empty it stops all, if given only selected
+ * 
+ * @param {object} settings 
+ * @param {string} id 
+ */
 function kimaiStop(settings, id = false) {
     return new Promise((resolve, reject) => {
         if (id) {
@@ -215,18 +275,31 @@ function callKimaiStop(settings, jsonList, i = 0) {
                 callKimaiStop(settings, jsonList, i)
             } else {
                 // resolve()
-                mainMenu(settings)
+                uiMainMenu(settings)
             }
         })
     // })
 }
 
-function kimaiList(settings, endpoint, print = false, filter = false) {
+/**
+ * Calls the api, lists and returns elements
+ * 
+ * @param {object} settings The full settings object read from the ini
+ * @param {string} endpoint The endpoint to call in the api.
+ * @param {boolean} print If true, it prints to the terminal
+ * @param {object} options Options: 
+ * options.filter: filter the query,
+ * options.verbose 
+ * @returns {array} res[0]: settings, res[1]: list of elements
+ */
+function kimaiList(settings, endpoint, print = false, options = false) {
+    const filter = options.filter || false
+    const verbose = options.verbose || false
     return new Promise((resolve, reject) => {
-        callKimaiApi('GET', endpoint, settings.serversettings, filter)
+        callKimaiApi('GET', endpoint, settings.serversettings, { qs: filter })
             .then(jsonList => {
                 if (print) {
-                    printList(jsonList, endpoint)
+                    printList(jsonList, endpoint, verbose)
                 }
                 resolve([settings, jsonList])
             })
@@ -236,7 +309,11 @@ function kimaiList(settings, endpoint, print = false, filter = false) {
     })
 }
 
-function selectMeasurement(thelist) {
+/**
+ * Interactive ui: select measurement from a list of measurements
+ * @param {} thelist 
+ */
+function uiSelectMeasurement(thelist) {
     return new Promise((resolve, reject) => {
         const choices = []
         for (let i = 0; i < thelist.length; i++) {
@@ -260,7 +337,13 @@ function selectMeasurement(thelist) {
     })
 }
 
-function autoSelect(thelist, message) {
+/**
+ * Returns a prompt with autocomplete
+ * 
+ * @param {array} thelist The list of elements to select from
+ * @param {string} message Prompt message
+ */
+function uiAutocompleteSelect(thelist, message) {
 
     return new Promise((resolve, reject) => {
         const choices = []
@@ -304,59 +387,94 @@ function autoSelect(thelist, message) {
 
 
 
-//prints lists to terminal:
-function printList(arr, endpoint) {
-    console.log()
-    if (arr.length > 1) {
-        console.log(arr.length + ' results:')
-    } else if (arr.length == 0) {
-        console.log('No results')
-    } else {
-        console.log('One result:')
+/**
+ * Prints list to terminal
+ * 
+ * @param {array} arr Items to list
+ * @param {string} endpoint for selecting display layout
+ * @param {boolean} verbose
+ */
+function printList(arr, endpoint, verbose = false) {
+    if (verbose) {
+        console.log()
+        if (arr.length > 1) {
+            console.log(arr.length + ' results:')
+        } else if (arr.length == 0) {
+            console.log('No results')
+        } else {
+            console.log('One result:')
+        }
     }
     for (let i = 0; i < arr.length; i++) {
         const element = arr[i];
 
         if (endpoint == 'projects' || endpoint == 'activities') {
-            console.log((i + 1) + ': ', element.name, '(id:' + element.id + ')')
-        } else {
-            if (arr.length > 1) {
-                console.log((i + 1) + ":")
+            if (verbose) {
+                console.log((i + 1) + ': ', element.name, '(id:' + element.id + ')')
+            } else {
+                console.log(element.name)
             }
-            console.log('   Id: ' + element.id)
-            console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
-            console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
-            console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
-            console.log()
+
+        } else {
+            if (verbose) {
+                if (arr.length > 1) {
+                    console.log((i + 1) + ":")
+                }
+                console.log('   Id: ' + element.id)
+                console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
+                console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
+                console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
+                console.log()
+            } else {
+                console.log(element.project.name, '|', element.activity.name)
+            }
+
         }
     }
     console.log()
 }
 
-
-function iniPath() {
+/**
+ * Finds settings file path
+ * 
+ * @param {boolean} verbose
+ * @returns string: Path to settings.ini
+ * @returns false: If no settings found
+ */
+function iniPath(verbose) {
     //different settings.ini path for developement and pkg version
     const settingsPathPkg = path.join(path.dirname(process.execPath), '/settings.ini')
     const settingsPathNode = path.join(__dirname, '/settings.ini')
-
+    if (verbose) {
+        console.log('Looking for settings.ini in the following places:')
+        console.log(settingsPathPkg)
+        console.log(settingsPathNode)
+    }
     if (fs.existsSync(settingsPathPkg)) {
         return settingsPathPkg
     } else if (fs.existsSync(settingsPathNode)) {
         return settingsPathNode
     } else {
+
         return false
     }
 }
 
-function checkSettings() {
+/**
+ * Checks if settings file exists, if not it's asks for settings
+ * 
+ * @param {boolean} verbose 
+ * @return {object} settings: all settings read from the settings file
+ */
+function checkSettings(verbose = false) {
     return new Promise((resolve, reject) => {
-        const settingsPath = iniPath()
+        const settingsPath = iniPath(verbose)
         if (settingsPath) {
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
         } else {
             console.log('Settings.ini not found')
-            askForSettings()
+            uiAskForSettings()
                 .then(settings => {
                     resolve(settings)
                 })
@@ -365,7 +483,10 @@ function checkSettings() {
     })
 }
 
-function askForSettings() {
+/**
+ * Interactive ui: asks for settings than saves them
+ */
+function uiAskForSettings() {
     return new Promise((resolve, reject) => {
         let questions = [
             {
@@ -397,13 +518,76 @@ function askForSettings() {
     })
 }
 
+
+/**
+ * Removes trailing slashes from url
+ * 
+ * @param {string} kimaiurl Url to sanitize
+ */
 function sanitizeServerUrl(kimaiurl) {
     return kimaiurl.replace(/\/+$/, "");
 }
 
-(function startup() {
-    checkSettings()
+/* -------------------------------------------------------------------------- */
+/*                                  Commander                                 */
+/* -------------------------------------------------------------------------- */
+
+program
+    .version(pjson.version)
+    .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
+    .option('-v, --verbose', 'verbose, longer logging')
+// .option('-r, --rainmeter', 'generate rainmeter files')
+// .option('-a, --argos', 'argos/bitbar output')
+
+program.command('start [project] [activity]')
+    .description('start selected project and activity.')
+    .action(function (project, activity) {
+        // console.log("starting: " + project + ", " + activity + " ");
+        //do something
+        console.log('not implemented yet, sorry!')
+    })
+
+program.command('stop')
+    .description('stop all measurements')
+    .action(function () {
+        //do something
+        console.log('not implemented yet, sorry!')
+    })
+
+program.command('list-recent')
+    .description('list recent measurements')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                kimaiList(settings, 'timesheets/recent', true, {verbose:program.verbose})
+            })
+    })
+
+program.command('list-projects')
+    .description('list all projects')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                kimaiList(settings, 'projects', true, {verbose:program.verbose})
+            })
+    })
+
+program.command('list-activities')
+    .description('list all activities')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                kimaiList(settings, 'activities', true, {verbose:program.verbose})
+            })
+    })
+
+program.parse(process.argv);
+
+
+//interactive mode if no option added
+if (!program.args.length) {
+    checkSettings(program.verbose)
         .then(settings => {
-            mainMenu(settings)
+            uiMainMenu(settings, program.verbose)
         })
-})()
+}

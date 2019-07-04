@@ -1,6 +1,6 @@
 {
   "name": "kimai2-cmd",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Command line client for Kimai2",
   "main": "kimai2-cmd.js",
   "bin": "kimai2-cmd.js",

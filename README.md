@@ -28,6 +28,18 @@ Integration:
 
 Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest)
 
+### Linux/Mac
+
+Add kimai2-cmd to path so you have to just type `kimai` to the terminal:
+```
+sudo ln -s /path/to/kimai2-cmd-os /usr/bin/kimai
+```
+
+To remove:
+```
+sudo rm /usr/bin/kimai
+```
+
 ## Usage
 
 Follow options in the terminal, currently only interactive UI
@@ -67,11 +79,31 @@ For building for other platforms see pkg's documentation, or open an issue and I
 
 ### Usage
 
+For interactive mode just simply:
+
 ```
 npm start
 ```
+or
+```
+node kimai2-cmd.js
+```
 
-Follow options in the terminal, currently only interactive UI
+For usage with options you have pass a `--` before the options if you start with `npm start`. You don't need this if you don't use options just commands
+
+So this two lines are equivalent, both shows the current version of kimai2-cmd:
+
+```
+npm start -- -V
+node kimai2-cmd.js -V
+```
+
+This two are equivalent as well, both starts the project `foo` with the activity `bar`
+
+```
+npm start start foo bar
+node kimai2-cmd.js start foo bar
+```
 
 On the first run it will ask for your settings, but you can just copy settings.ini.example to settings.ini and modify it with your favourite text editor
 
