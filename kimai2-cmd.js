@@ -224,11 +224,11 @@ function uiKimaiStart(settings, verbose = false) {
                     project: selected.projectId,
                     activity: selected.activityId
                 }
-                if (verbose){
+                if (verbose) {
                     console.log("kimaistart calling api:", body)
                 }
 
-                return callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose:verbose })
+                return callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose: verbose })
             })
             .then(res => {
                 console.log('Started: ' + res.id)
@@ -443,8 +443,12 @@ function printList(arr, endpoint, verbose = false) {
  */
 function iniPath(verbose) {
     //different settings.ini path for developement and pkg version
-    const settingsPathPkg = path.join(path.dirname(process.execPath), '/settings.ini')
-    const settingsPathNode = path.join(__dirname, '/settings.ini')
+    const root = [
+        path.dirname(process.execPath),
+        __dirname
+    ]
+    const settingsPathPkg = path.join(root[0], '/settings.ini')
+    const settingsPathNode = path.join(root[1], '/settings.ini')
     if (verbose) {
         console.log('Looking for settings.ini in the following places:')
         console.log(settingsPathPkg)
@@ -469,6 +473,7 @@ function iniPath(verbose) {
 function checkSettings(verbose = false) {
     return new Promise((resolve, reject) => {
         const settingsPath = iniPath(verbose)
+        if (verbose) console.log("found at: ", settingsPath)
         if (settingsPath) {
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
@@ -559,7 +564,7 @@ program.command('list-recent')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'timesheets/recent', true, {verbose:program.verbose})
+                kimaiList(settings, 'timesheets/recent', true, { verbose: program.verbose })
             })
     })
 
@@ -568,7 +573,7 @@ program.command('list-projects')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'projects', true, {verbose:program.verbose})
+                kimaiList(settings, 'projects', true, { verbose: program.verbose })
             })
     })
 
@@ -577,8 +582,14 @@ program.command('list-activities')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'activities', true, {verbose:program.verbose})
+                kimaiList(settings, 'activities', true, { verbose: program.verbose })
             })
+    })
+
+program.command('debug')
+    .description('debug snapshot filesystem. If you see this you are using a developement build')
+    .action(function () {
+        fs.readdir(__dirname, (err, files) => { console.log(files) })
     })
 
 program.parse(process.argv);

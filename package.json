@@ -6,7 +6,8 @@
   "bin": "kimai2-cmd.js",
   "scripts": {
     "start": "node kimai2-cmd.js",
-    "build": "pkg --out-path builds package.json"
+    "build": "pkg --out-path builds package.json",
+    "build-current": "pkg --targets node10 --out-path builds kimai2-cmd.js"
   },
   "keywords": [
     "kimai2",
@@ -35,9 +36,10 @@
   },
   "homepage": "https://github.com/infeeeee/kimai2-cmd#readme",
   "pkg": {
-    "scripts": ["kimai2-cmd.js"],
-    "assets": [""],
-    "targets": ["node10-linux-x64", "node10-macos-x64", "node10-win-x64"]
-    
+    "targets": [
+      "node10-linux",
+      "node10-macos",
+      "node10-win"
+    ]
   }
 }

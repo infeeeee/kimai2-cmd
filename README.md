@@ -68,13 +68,20 @@ Requirements: globally installed [pkg](https://github.com/zeit/pkg):
 npm install pkg -g
 ```
 
-Build x64 executables to linux, mac, win:
+Build for current platform and architecture
+
+```
+npm run build-current
+```
+
+
+Build x64 executables to linux, mac, win (not really working for unknown reason)
 
 ```
 npm run build
 ```
 
-For building for other platforms see pkg's documentation, or open an issue and I can build it for you.
+About building for other platforms see pkg's documentation, or open an issue and I can build it for you.
 
 
 ### Usage
