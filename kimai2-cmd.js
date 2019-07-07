@@ -158,19 +158,19 @@ function uiMainMenu(settings, verbose = false) {
                     break;
 
                 case 'list-active':
-                    kimaiList(settings, 'timesheets/active', true, { verbose: verbose })
+                    kimaiList(settings, 'timesheets/active', true, { verbose: verbose, printId: program.id })
                         .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-recent':
-                    kimaiList(settings, 'timesheets/recent', true, { verbose: verbose })
+                    kimaiList(settings, 'timesheets/recent', true, { verbose: verbose, printId: program.id })
                         .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-projects':
-                    kimaiList(settings, 'projects', true, { verbose: verbose })
+                    kimaiList(settings, 'projects', true, { verbose: verbose, printId: program.id })
                         .then(res => uiMainMenu(res[0], verbose))
                     break;
                 case 'list-activities':
-                    kimaiList(settings, 'activities', true, { verbose: verbose })
+                    kimaiList(settings, 'activities', true, { verbose: verbose, printId: program.id })
                         .then(res => uiMainMenu(res[0], verbose))
                     break;
                 default:
@@ -218,21 +218,62 @@ function uiKimaiStart(settings, verbose = false) {
             })
             .then(res => {
                 selected.activityId = res.id
-
-                let body = {
-                    begin: moment().format(),
-                    project: selected.projectId,
-                    activity: selected.activityId
-                }
-                if (verbose) {
-                    console.log("kimaistart calling api:", body)
-                }
-
-                return callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose: verbose })
+                return kimaiStart(settings, selected.projectId, selected.activityId, verbose)
             })
+            .then(_ => {
+                resolve()
+            })
+    })
+}
+
+/**
+ * Start a timer on the server
+ * 
+ * @param {object} settings 
+ * @param {string} project Id of project
+ * @param {string} activity Id of activity
+ */
+function kimaiStart(settings, project, activity, verbose) {
+    return new Promise((resolve, reject) => {
+
+        let body = {
+            begin: moment().format(),
+            project: project,
+            activity: activity
+        }
+        if (verbose) {
+            console.log("kimaistart calling api:", body)
+        }
+
+        callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose: verbose })
             .then(res => {
                 console.log('Started: ' + res.id)
                 resolve()
+            })
+    })
+
+}
+
+/**
+ * Find id of project or activity by name
+ * 
+ * @param {object} settings 
+ * @param {string} name The name to search for
+ * @param {string} endpoint 
+ * @param {boolean} verbose 
+ */
+function findId(settings, name, endpoint, verbose) {
+    return new Promise((resolve, reject) => {
+        kimaiList(settings, endpoint, false, { verbose: verbose })
+            .then(res => {
+                const list = res[1]
+                for (let i = 0; i < list.length; i++) {
+                    const element = list[i];
+                    if (element.name.toLowerCase() == name.toLowerCase()) {
+                        resolve(element.id)
+                    }
+                }
+                reject()
             })
     })
 }
@@ -254,31 +295,32 @@ function kimaiStop(settings, id = false) {
             kimaiList(settings, 'timesheets/active', false)
                 .then(res => {
                     const jsonList = res[1]
-                    // return callKimaiStop(settings, jsonList)
-                    callKimaiStop(settings, jsonList)
+                    return callKimaiStop(settings, jsonList)
+                    //callKimaiStop(settings, jsonList)
                 })
-            // .then(_ => {
-            //     resolve()
-            // })
+                .then(_ => {
+                    resolve()
+                })
         }
     })
 }
 
 function callKimaiStop(settings, jsonList, i = 0) {
-    // return new Promise((resolve, reject) => {
-    const element = jsonList[i];
-    callKimaiApi('PATCH', 'timesheets/' + element.id + '/stop', settings.serversettings)
-        .then(jsl => {
-            console.log('Stopped: ', jsl.id)
-            i++
-            if (i < jsonList.length) {
-                callKimaiStop(settings, jsonList, i)
-            } else {
-                // resolve()
-                uiMainMenu(settings)
-            }
-        })
-    // })
+    return new Promise((resolve, reject) => {
+        const element = jsonList[i];
+        callKimaiApi('PATCH', 'timesheets/' + element.id + '/stop', settings.serversettings)
+            .then(jsl => {
+                console.log('Stopped: ', jsl.id)
+                i++
+                if (i < jsonList.length) {
+                    callKimaiStop(settings, jsonList, i)
+                } else {
+                    //return
+                    resolve()
+                    // uiMainMenu(settings)
+                }
+            })
+    })
 }
 
 /**
@@ -289,17 +331,19 @@ function callKimaiStop(settings, jsonList, i = 0) {
  * @param {boolean} print If true, it prints to the terminal
  * @param {object} options Options: 
  * options.filter: filter the query,
+ * options.printId: print ids with list
  * options.verbose 
  * @returns {array} res[0]: settings, res[1]: list of elements
  */
 function kimaiList(settings, endpoint, print = false, options = false) {
     const filter = options.filter || false
     const verbose = options.verbose || false
+    const printId = options.printId || false
     return new Promise((resolve, reject) => {
         callKimaiApi('GET', endpoint, settings.serversettings, { qs: filter })
             .then(jsonList => {
                 if (print) {
-                    printList(jsonList, endpoint, verbose)
+                    printList(jsonList, endpoint, { verbose: verbose, printId: printId })
                 }
                 resolve([settings, jsonList])
             })
@@ -394,7 +438,9 @@ function uiAutocompleteSelect(thelist, message) {
  * @param {string} endpoint for selecting display layout
  * @param {boolean} verbose
  */
-function printList(arr, endpoint, verbose = false) {
+function printList(arr, endpoint, options = false) {
+    verbose = options.verbose || false
+    printId = options.printId || false
     if (verbose) {
         console.log()
         if (arr.length > 1) {
@@ -410,12 +456,14 @@ function printList(arr, endpoint, verbose = false) {
 
         if (endpoint == 'projects' || endpoint == 'activities') {
             if (verbose) {
-                console.log((i + 1) + ': ', element.name, '(id:' + element.id + ')')
+                console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
+            } else if (printId) {
+                console.log(element.id + ':', element.name)
             } else {
                 console.log(element.name)
             }
 
-        } else {
+        } else { //measurements
             if (verbose) {
                 if (arr.length > 1) {
                     console.log((i + 1) + ":")
@@ -425,6 +473,8 @@ function printList(arr, endpoint, verbose = false) {
                 console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
                 console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
                 console.log()
+            } else if (printId) {
+                console.log(element.id + ':', element.project.name, '|', element.activity.name)
             } else {
                 console.log(element.project.name, '|', element.activity.name)
             }
@@ -540,23 +590,54 @@ function sanitizeServerUrl(kimaiurl) {
 program
     .version(pjson.version)
     .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
-    .option('-v, --verbose', 'verbose, longer logging')
+    .option('-v, --verbose', 'verbose, longer logging', false)
+    .option('-i, --id', 'show id of elements when listing', false)
 // .option('-r, --rainmeter', 'generate rainmeter files')
 // .option('-a, --argos', 'argos/bitbar output')
 
 program.command('start [project] [activity]')
-    .description('start selected project and activity.')
+    .description('start selected project and activity')
     .action(function (project, activity) {
-        // console.log("starting: " + project + ", " + activity + " ");
-        //do something
-        console.log('not implemented yet, sorry!')
+        const selected = {}
+        checkSettings()
+            .then(settings => {
+                findId(settings, project, 'projects', program.verbose)
+                    .then(projectid => {
+                        selected.projectId = projectid
+                        return findId(settings, activity, 'activities', program.verbose)
+                    })
+                    .then(activityid => {
+                        selected.activityId = activityid
+                        return kimaiStart(settings, selected.projectId, selected.activityId, program.verbose)
+                    })
+            })
+    })
+
+program.command('restart [id]')
+    .description('restart selected measurement')
+    .action(function (measurementId) {
+        checkSettings()
+            .then(settings => {
+                kimaiRestart(settings, measurementId)
+            })
     })
 
 program.command('stop')
     .description('stop all measurements')
     .action(function () {
-        //do something
-        console.log('not implemented yet, sorry!')
+        checkSettings()
+            .then(settings => {
+                kimaiStop(settings)
+            })
+    })
+
+program.command('list-active')
+    .description('list active measurements')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                kimaiList(settings, 'timesheets/active', true, { verbose: program.verbose, printId: program.id })
+            })
     })
 
 program.command('list-recent')
@@ -564,7 +645,7 @@ program.command('list-recent')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'timesheets/recent', true, { verbose: program.verbose })
+                kimaiList(settings, 'timesheets/recent', true, { verbose: program.verbose, printId: program.id })
             })
     })
 
@@ -573,7 +654,7 @@ program.command('list-projects')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'projects', true, { verbose: program.verbose })
+                kimaiList(settings, 'projects', true, { verbose: program.verbose, printId: program.id })
             })
     })
 
@@ -582,15 +663,15 @@ program.command('list-activities')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'activities', true, { verbose: program.verbose })
+                kimaiList(settings, 'activities', true, { verbose: program.verbose, printId: program.id })
             })
     })
 
-program.command('debug')
-    .description('debug snapshot filesystem. If you see this you are using a developement build')
-    .action(function () {
-        fs.readdir(__dirname, (err, files) => { console.log(files) })
-    })
+// program.command('debug')
+//     .description('debug snapshot filesystem. If you see this you are using a developement build')
+//     .action(function () {
+//         fs.readdir(__dirname, (err, files) => { console.log(files) })
+//     })
 
 program.parse(process.argv);
 
