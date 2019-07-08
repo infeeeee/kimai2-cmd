@@ -26,7 +26,9 @@ Integration:
 
 ## Installation
 
-Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required
+Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required.
+
+You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> User profile -> API 
 
 ### Notes on Windows
 
@@ -35,7 +37,7 @@ Add the path of the containing folder to the %PATH% environment variable so you 
 - Open start menu and type: SystemPropertiesAdvanced.exe
 - Go to Advanced tab click Environment variables
 - Select path on the top pane, click Edit
-- on win 7,8 add the folloing to the end of the variable: `;c:\path\to\containing\folder`
+- On win 7,8 add the following to the end of the variable: `;c:\path\to\containing\folder`
 - On win 10 click New and type `c:\path\to\containing\folder`
 - Log off and on if not working
 
@@ -64,7 +66,7 @@ Two usage modes: interactive and classic ui
 
 ### Interactive ui
 
-If you start without any commands, you will get to the interactive UI. Use your keyboard's arrow keys for navigation. On the *Start new measurement* menu item you can search for project and activity names.
+If you start without any commands, you will get to the interactive UI. Use your keyboard's arrow keys for navigation. On the `Start new measurement` menu item you can search for project and activity names.
 
 You can exit with ctrl+c any time.
 
@@ -95,7 +97,7 @@ Commands:
   list-activities             list all activities
 ```
 
-Project ans activity names are case insensitive. If your project or activity name contains a space, wrap it in double or single quotes. This example starts prject named foo with activity named bar bar:
+Project and activity names are case insensitive. If your project or activity name contains a space, wrap it in double or single quotes. This example starts project named `foo` with activity named `bar bar`:
 
 ```
 kimai2-cmd start "foo" "bar bar"
