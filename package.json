@@ -1,12 +1,12 @@
 {
   "name": "kimai2-cmd",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Command line client for Kimai2",
   "main": "kimai2-cmd.js",
   "bin": "kimai2-cmd.js",
   "scripts": {
     "start": "node kimai2-cmd.js",
-    "build": "pkg --out-path builds package.json",
+    "build-nix": "pkg --out-path builds package.json",
     "build-current": "pkg --targets node10 --out-path builds kimai2-cmd.js"
   },
   "keywords": [
@@ -38,8 +38,7 @@
   "pkg": {
     "targets": [
       "node10-linux",
-      "node10-macos",
-      "node10-win"
+      "node10-macos"
     ]
   }
 }

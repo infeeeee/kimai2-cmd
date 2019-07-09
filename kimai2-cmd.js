@@ -351,7 +351,7 @@ function kimaiList(settings, endpoint, print = false, options = false) {
         callKimaiApi('GET', endpoint, settings.serversettings, { qs: filter })
             .then(jsonList => {
                 if (print) {
-                    printList(jsonList, endpoint, { verbose: verbose, printId: printId })
+                    printList(jsonList, endpoint, { verbose: verbose, printId: printId, kimaipath: settings.bitbar.kimaipath })
                 }
                 resolve([settings, jsonList])
             })
@@ -362,17 +362,36 @@ function kimaiList(settings, endpoint, print = false, options = false) {
 }
 
 /**
+ * Check if it's a mac. On mac bitbar requires the full path.
+ * 
+ * @param {path} exepath Path to executable
+ */
+function argosCheckDarwin(exepath) {
+    if (platform == "darwin") {
+        return exepath
+    } else {
+        return 'kimai'
+    }
+}
+
+
+
+/**
  * Prints list to terminal
  * 
  * @param {array} arr Items to list
  * @param {string} endpoint for selecting display layout
  * @param {object} options 
  * options.printId: print ids with list
+ * options.kimaipath: path to kimai on mac for bitbar
  * options.verbose 
  */
 function printList(arr, endpoint, options = false) {
     const verbose = options.verbose || false
     const printId = options.printId || false
+    const kimaiExe = argosCheckDarwin(options.kimaipath)
+
+
     if (verbose) {
         console.log()
         if (arr.length > 1) {
@@ -427,19 +446,22 @@ function printList(arr, endpoint, options = false) {
 
             } else if (printId) {
                 console.log(element.id + ':', element.project.name, '|', element.activity.name)
-            } else if (program.argos || program.argosbutton) {
+            } else if (program.argos) {
                 if (endpoint == 'timesheets/recent') {
-                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash="kimai restart', element.id, '" terminal=false refresh=true')
+                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash=' + kimaiExe + ' param1=restart param2=' + element.id + ' terminal=false refresh=true')
                 } else if (endpoint == 'timesheets/active') {
                     let dur = moment.duration(moment().diff(moment(element.begin)))
-                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash="kimai stop', element.id, '" terminal=false refresh=true')
+                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash=' + kimaiExe + ' param1=stop param2=' + element.id + ' terminal=false refresh=true')
                 }
+            } else if (program.argosbutton) {
+                let dur = moment.duration(moment().diff(moment(element.begin)))
+                console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '| length=10')
             } else {
                 console.log(element.project.name, '|', element.activity.name)
+                console.log()
             }
         }
     }
-    console.log()
 }
 
 
@@ -604,6 +626,9 @@ function uiAskForSettings(verbose = false) {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
+                settings.bitbar = {
+                    kimaipath: process.execPath
+                }
 
                 const thePath = iniFullPath()
                 if (verbose) { console.log('Trying to save settings to: '.thePath) }

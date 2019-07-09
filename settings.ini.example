@@ -2,3 +2,6 @@
 kimaiurl=https://demo.kimai.org
 username=anna_admin
 password=apipassword
+
+[bitbar]
+kimaipath=/path/to/kimai2-cmd-macos
