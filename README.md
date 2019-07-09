@@ -21,6 +21,7 @@ UI:
 
 Integration:
 - [x] Portable executable for all three platforms
+- [ ] Installer for windows
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
 - [ ] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac)
 
@@ -108,6 +109,8 @@ kimai2-cmd start "foo" "bar bar"
 All settings stored in the settings.ini file. Place this file to the same directory as the executable. If no settings file found you will drop to the interactive UI, where you can add your settings. 
 
 You can create your settings.ini file manually, by downloading, renaming and editing [settings.ini.example](https://github.com/infeeeee/kimai2-cmd/blob/master/settings.ini.example).
+
+On the windows installer version settings.ini location: `C:\Users\Username\AppData\Roaming\kimai2-cmd\settings.ini`
 
 ## Developement version
 

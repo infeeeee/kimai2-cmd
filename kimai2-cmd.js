@@ -6,6 +6,9 @@
 const path = require('path');
 const fs = require('fs');
 
+const platform = process.platform
+const appdata = process.env.appdata
+
 //request
 const request = require('request');
 
@@ -37,7 +40,7 @@ var pjson = require('./package.json');
  * options.qs querystring
  * options.reqbody request body
  * options.verbose Verbose
- * @returns {object} The redponse body as an object
+ * @returns {object} The response body as an object
  * 
  */
 function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) {
@@ -305,6 +308,13 @@ function kimaiStop(settings, id = false) {
     })
 }
 
+/**
+ * Supplementary function for stopping multiple running measurements
+ * 
+ * @param {*} settings All settings
+ * @param {*} jsonList As the output of kimaiList()
+ * @param {*} i Counter, do not use!
+ */
 function callKimaiStop(settings, jsonList, i = 0) {
     return new Promise((resolve, reject) => {
         const element = jsonList[i];
@@ -315,9 +325,7 @@ function callKimaiStop(settings, jsonList, i = 0) {
                 if (i < jsonList.length) {
                     callKimaiStop(settings, jsonList, i)
                 } else {
-                    //return
                     resolve()
-                    // uiMainMenu(settings)
                 }
             })
     })
@@ -388,7 +396,6 @@ function uiSelectMeasurement(thelist) {
  * @param {string} message Prompt message
  */
 function uiAutocompleteSelect(thelist, message) {
-
     return new Promise((resolve, reject) => {
         const choices = []
         const names = []
@@ -427,8 +434,6 @@ function uiAutocompleteSelect(thelist, message) {
             })
     })
 }
-
-
 
 
 /**
@@ -478,7 +483,6 @@ function printList(arr, endpoint, options = false) {
             } else {
                 console.log(element.project.name, '|', element.activity.name)
             }
-
         }
     }
     console.log()
@@ -493,25 +497,26 @@ function printList(arr, endpoint, options = false) {
  */
 function iniPath(verbose) {
     //different settings.ini path for developement and pkg version
-    const root = [
+    const iniRoot = [
         path.dirname(process.execPath),
-        __dirname
+        __dirname,
+        path.join(appdata, '/kimai2-cmd')
     ]
-    const settingsPathPkg = path.join(root[0], '/settings.ini')
-    const settingsPathNode = path.join(root[1], '/settings.ini')
+
     if (verbose) {
         console.log('Looking for settings.ini in the following places:')
-        console.log(settingsPathPkg)
-        console.log(settingsPathNode)
+        console.log(iniRoot)
     }
-    if (fs.existsSync(settingsPathPkg)) {
-        return settingsPathPkg
-    } else if (fs.existsSync(settingsPathNode)) {
-        return settingsPathNode
-    } else {
 
-        return false
+    for (let i = 0; i < iniRoot.length; i++) {
+        const currentIniPath = path.join(iniRoot[i], '/settings.ini')
+        if (fs.existsSync(currentIniPath)) {
+            return currentIniPath
+        }
     }
+
+    // no ini found so:
+    return false
 }
 
 /**
@@ -523,13 +528,13 @@ function iniPath(verbose) {
 function checkSettings(verbose = false) {
     return new Promise((resolve, reject) => {
         const settingsPath = iniPath(verbose)
-        if (verbose) console.log("found at: ", settingsPath)
         if (settingsPath) {
+            if (verbose) console.log("settings.ini found at: ", settingsPath)
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
         } else {
             console.log('Settings.ini not found')
-            uiAskForSettings()
+            uiAskForSettings(verbose)
                 .then(settings => {
                     resolve(settings)
                 })
@@ -540,8 +545,10 @@ function checkSettings(verbose = false) {
 
 /**
  * Interactive ui: asks for settings than saves them
+ * 
+ * @param {boolean} verbose
  */
-function uiAskForSettings() {
+function uiAskForSettings(verbose = false) {
     return new Promise((resolve, reject) => {
         let questions = [
             {
@@ -566,11 +573,33 @@ function uiAskForSettings() {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
-                fs.writeFileSync('./settings.ini', ini.stringify(settings))
-                console.log('settings saved to ' + iniPath())
+
+                const thePath = iniFullPath()
+                if (verbose) { console.log('Trying to save settings to: '.thePath) }
+
+                fs.writeFileSync(thePath, ini.stringify(settings))
+                console.log('Settings saved to ' + iniPath())
                 resolve(settings)
             });
     })
+}
+
+
+/**
+ * Returns the ini save path based on os and installation type, creates folder if necessary
+ */
+function iniFullPath() {
+    let installDir = path.dirname(process.execPath).split("\\")
+
+    //I should replace this tererible if to some registry value readin, maybe for uninstaller
+    if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
+        if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
+            fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
+        }
+        return path.join(appdata, 'kimai2-cmd', 'settings.ini')
+    } else {
+        return './settings.ini'
+    }
 }
 
 
