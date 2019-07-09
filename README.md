@@ -23,7 +23,7 @@ Integration:
 - [x] Portable executable for all three platforms
 - [ ] Installer for windows
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
-- [ ] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac)
+- [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
 ## Installation
 
@@ -86,16 +86,19 @@ Options:
   -V, --version               output the version number
   -v, --verbose               verbose, longer logging
   -i, --id                    show id of elements when listing
+  -b, --argosbutton           argos/bitbar button output
+  -a, --argos                 argos/bitbar output
   -h, --help                  output usage information
 
 Commands:
   start [project] [activity]  start selected project and activity
   restart [id]                restart selected measurement
-  stop                        stop all measurements
+  stop [id]                   stop all or selected measurement measurements, [id] is optional
   list-active                 list active measurements
   list-recent                 list recent measurements
   list-projects               list all projects
   list-activities             list all activities
+  url                         prints the url of the server
 ```
 
 Project and activity names are case insensitive. If your project or activity name contains a space, wrap it in double or single quotes. This example starts project named `foo` with activity named `bar bar`:

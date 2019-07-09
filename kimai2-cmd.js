@@ -362,6 +362,88 @@ function kimaiList(settings, endpoint, print = false, options = false) {
 }
 
 /**
+ * Prints list to terminal
+ * 
+ * @param {array} arr Items to list
+ * @param {string} endpoint for selecting display layout
+ * @param {object} options 
+ * options.printId: print ids with list
+ * options.verbose 
+ */
+function printList(arr, endpoint, options = false) {
+    const verbose = options.verbose || false
+    const printId = options.printId || false
+    if (verbose) {
+        console.log()
+        if (arr.length > 1) {
+            console.log(arr.length + ' results:')
+        } else if (arr.length == 0) {
+            console.log('No results')
+        } else {
+            console.log('One result:')
+        }
+    }
+    //no result for scripts:
+    if (arr.length == 0) {
+        if (program.argos) {
+            console.log('No active measurements')
+        }
+        if (program.argosbutton) {
+            console.log("Kimai2")
+        }
+    }
+    for (let i = 0; i < arr.length; i++) {
+        const element = arr[i];
+
+        if (endpoint == 'projects' || endpoint == 'activities') {
+            if (verbose) {
+                console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
+            } else if (printId) {
+                console.log(element.id + ':', element.name)
+            } else {
+                console.log(element.name)
+            }
+
+        } else { //measurements
+            if (verbose) {
+                if (arr.length > 1) {
+                    console.log((i + 1) + ":")
+                }
+                console.log('   Id: ' + element.id)
+                console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
+                console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
+                console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
+                console.log('   Begin: ' + element.begin)
+
+                if (moment(element.end).isValid()) {
+                    //finished measurements:
+                    let dur = moment.duration(moment(element.end).diff(moment(element.begin)))
+                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                } else {
+                    //active measurements:
+                    let dur = moment.duration(moment().diff(moment(element.begin)))
+                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                }
+
+            } else if (printId) {
+                console.log(element.id + ':', element.project.name, '|', element.activity.name)
+            } else if (program.argos || program.argosbutton) {
+                if (endpoint == 'timesheets/recent') {
+                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash="kimai restart', element.id, '" terminal=false refresh=true')
+                } else if (endpoint == 'timesheets/active') {
+                    let dur = moment.duration(moment().diff(moment(element.begin)))
+                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash="kimai stop', element.id, '" terminal=false refresh=true')
+                }
+            } else {
+                console.log(element.project.name, '|', element.activity.name)
+            }
+        }
+    }
+    console.log()
+}
+
+
+/**
  * Interactive ui: select measurement from a list of measurements
  * @param {} thelist 
  */
@@ -437,58 +519,6 @@ function uiAutocompleteSelect(thelist, message) {
 
 
 /**
- * Prints list to terminal
- * 
- * @param {array} arr Items to list
- * @param {string} endpoint for selecting display layout
- * @param {boolean} verbose
- */
-function printList(arr, endpoint, options = false) {
-    verbose = options.verbose || false
-    printId = options.printId || false
-    if (verbose) {
-        console.log()
-        if (arr.length > 1) {
-            console.log(arr.length + ' results:')
-        } else if (arr.length == 0) {
-            console.log('No results')
-        } else {
-            console.log('One result:')
-        }
-    }
-    for (let i = 0; i < arr.length; i++) {
-        const element = arr[i];
-
-        if (endpoint == 'projects' || endpoint == 'activities') {
-            if (verbose) {
-                console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
-            } else if (printId) {
-                console.log(element.id + ':', element.name)
-            } else {
-                console.log(element.name)
-            }
-
-        } else { //measurements
-            if (verbose) {
-                if (arr.length > 1) {
-                    console.log((i + 1) + ":")
-                }
-                console.log('   Id: ' + element.id)
-                console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
-                console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
-                console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
-                console.log()
-            } else if (printId) {
-                console.log(element.id + ':', element.project.name, '|', element.activity.name)
-            } else {
-                console.log(element.project.name, '|', element.activity.name)
-            }
-        }
-    }
-    console.log()
-}
-
-/**
  * Finds settings file path
  * 
  * @param {boolean} verbose
@@ -496,12 +526,13 @@ function printList(arr, endpoint, options = false) {
  * @returns false: If no settings found
  */
 function iniPath(verbose) {
-    //different settings.ini path for developement and pkg version
+    //different settings.ini path for developement and pkg and windows installer version
     const iniRoot = [
         path.dirname(process.execPath),
-        __dirname,
-        path.join(appdata, '/kimai2-cmd')
+        __dirname
     ]
+
+    if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
 
     if (verbose) {
         console.log('Looking for settings.ini in the following places:')
@@ -621,8 +652,9 @@ program
     .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
     .option('-v, --verbose', 'verbose, longer logging', false)
     .option('-i, --id', 'show id of elements when listing', false)
-// .option('-r, --rainmeter', 'generate rainmeter files')
-// .option('-a, --argos', 'argos/bitbar output')
+    // .option('-r, --rainmeter', 'generate rainmeter files')
+    .option('-b, --argosbutton', 'argos/bitbar button output')
+    .option('-a, --argos', 'argos/bitbar output')
 
 program.command('start [project] [activity]')
     .description('start selected project and activity')
@@ -651,12 +683,12 @@ program.command('restart [id]')
             })
     })
 
-program.command('stop')
-    .description('stop all measurements')
-    .action(function () {
+program.command('stop [id]')
+    .description('stop all or selected measurement measurements, [id] is optional')
+    .action(function (measurementId) {
         checkSettings()
             .then(settings => {
-                kimaiStop(settings)
+                kimaiStop(settings, measurementId)
             })
     })
 
@@ -693,6 +725,15 @@ program.command('list-activities')
         checkSettings()
             .then(settings => {
                 kimaiList(settings, 'activities', true, { verbose: program.verbose, printId: program.id })
+            })
+    })
+
+program.command('url')
+    .description('prints the url of the server')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                console.log(settings.serversettings.kimaiurl)
             })
     })
 
