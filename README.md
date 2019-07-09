@@ -115,6 +115,8 @@ You can create your settings.ini file manually, by downloading, renaming and edi
 
 On the windows installer version settings.ini location: `C:\Users\Username\AppData\Roaming\kimai2-cmd\settings.ini`
 
+Integration settings are not asked during first run, you have to change them manually in settings.ini. If you don't use an integration, you can safely ignore its settings.
+
 ## Developement version
 
 ### Installation
@@ -144,10 +146,10 @@ npm run build-current
 ```
 
 
-Build x64 executables to linux, mac, win (not really working for unknown reason)
+Build x64 executables for linux, mac on linux or on mac
 
 ```
-npm run build
+npm run build-nix
 ```
 
 About building for other platforms see pkg's documentation, or open an issue and I can build it for you.
