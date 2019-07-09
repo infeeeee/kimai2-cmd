@@ -21,12 +21,15 @@ UI:
 
 Integration:
 - [x] Portable executable for all three platforms
+- [ ] Installer for windows
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
-- [ ] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac)
+- [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
 ## Installation
 
-Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required
+Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required.
+
+You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> User profile -> API 
 
 ### Notes on Windows
 
@@ -35,7 +38,7 @@ Add the path of the containing folder to the %PATH% environment variable so you 
 - Open start menu and type: SystemPropertiesAdvanced.exe
 - Go to Advanced tab click Environment variables
 - Select path on the top pane, click Edit
-- on win 7,8 add the folloing to the end of the variable: `;c:\path\to\containing\folder`
+- On win 7,8 add the following to the end of the variable: `;c:\path\to\containing\folder`
 - On win 10 click New and type `c:\path\to\containing\folder`
 - Log off and on if not working
 
@@ -64,7 +67,7 @@ Two usage modes: interactive and classic ui
 
 ### Interactive ui
 
-If you start without any commands, you will get to the interactive UI. Use your keyboard's arrow keys for navigation. On the *Start new measurement* menu item you can search for project and activity names.
+If you start without any commands, you will get to the interactive UI. Use your keyboard's arrow keys for navigation. On the `Start new measurement` menu item you can search for project and activity names.
 
 You can exit with ctrl+c any time.
 
@@ -83,19 +86,22 @@ Options:
   -V, --version               output the version number
   -v, --verbose               verbose, longer logging
   -i, --id                    show id of elements when listing
+  -b, --argosbutton           argos/bitbar button output
+  -a, --argos                 argos/bitbar output
   -h, --help                  output usage information
 
 Commands:
   start [project] [activity]  start selected project and activity
   restart [id]                restart selected measurement
-  stop                        stop all measurements
+  stop [id]                   stop all or selected measurement measurements, [id] is optional
   list-active                 list active measurements
   list-recent                 list recent measurements
   list-projects               list all projects
   list-activities             list all activities
+  url                         prints the url of the server
 ```
 
-Project ans activity names are case insensitive. If your project or activity name contains a space, wrap it in double or single quotes. This example starts prject named foo with activity named bar bar:
+Project and activity names are case insensitive. If your project or activity name contains a space, wrap it in double or single quotes. This example starts project named `foo` with activity named `bar bar`:
 
 ```
 kimai2-cmd start "foo" "bar bar"
@@ -106,6 +112,8 @@ kimai2-cmd start "foo" "bar bar"
 All settings stored in the settings.ini file. Place this file to the same directory as the executable. If no settings file found you will drop to the interactive UI, where you can add your settings. 
 
 You can create your settings.ini file manually, by downloading, renaming and editing [settings.ini.example](https://github.com/infeeeee/kimai2-cmd/blob/master/settings.ini.example).
+
+On the windows installer version settings.ini location: `C:\Users\Username\AppData\Roaming\kimai2-cmd\settings.ini`
 
 ## Developement version
 

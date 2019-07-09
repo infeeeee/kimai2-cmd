@@ -6,6 +6,9 @@
 const path = require('path');
 const fs = require('fs');
 
+const platform = process.platform
+const appdata = process.env.appdata
+
 //request
 const request = require('request');
 
@@ -37,7 +40,7 @@ var pjson = require('./package.json');
  * options.qs querystring
  * options.reqbody request body
  * options.verbose Verbose
- * @returns {object} The redponse body as an object
+ * @returns {object} The response body as an object
  * 
  */
 function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) {
@@ -305,6 +308,13 @@ function kimaiStop(settings, id = false) {
     })
 }
 
+/**
+ * Supplementary function for stopping multiple running measurements
+ * 
+ * @param {*} settings All settings
+ * @param {*} jsonList As the output of kimaiList()
+ * @param {*} i Counter, do not use!
+ */
 function callKimaiStop(settings, jsonList, i = 0) {
     return new Promise((resolve, reject) => {
         const element = jsonList[i];
@@ -315,9 +325,7 @@ function callKimaiStop(settings, jsonList, i = 0) {
                 if (i < jsonList.length) {
                     callKimaiStop(settings, jsonList, i)
                 } else {
-                    //return
                     resolve()
-                    // uiMainMenu(settings)
                 }
             })
     })
@@ -354,6 +362,88 @@ function kimaiList(settings, endpoint, print = false, options = false) {
 }
 
 /**
+ * Prints list to terminal
+ * 
+ * @param {array} arr Items to list
+ * @param {string} endpoint for selecting display layout
+ * @param {object} options 
+ * options.printId: print ids with list
+ * options.verbose 
+ */
+function printList(arr, endpoint, options = false) {
+    const verbose = options.verbose || false
+    const printId = options.printId || false
+    if (verbose) {
+        console.log()
+        if (arr.length > 1) {
+            console.log(arr.length + ' results:')
+        } else if (arr.length == 0) {
+            console.log('No results')
+        } else {
+            console.log('One result:')
+        }
+    }
+    //no result for scripts:
+    if (arr.length == 0) {
+        if (program.argos) {
+            console.log('No active measurements')
+        }
+        if (program.argosbutton) {
+            console.log("Kimai2")
+        }
+    }
+    for (let i = 0; i < arr.length; i++) {
+        const element = arr[i];
+
+        if (endpoint == 'projects' || endpoint == 'activities') {
+            if (verbose) {
+                console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
+            } else if (printId) {
+                console.log(element.id + ':', element.name)
+            } else {
+                console.log(element.name)
+            }
+
+        } else { //measurements
+            if (verbose) {
+                if (arr.length > 1) {
+                    console.log((i + 1) + ":")
+                }
+                console.log('   Id: ' + element.id)
+                console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
+                console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
+                console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
+                console.log('   Begin: ' + element.begin)
+
+                if (moment(element.end).isValid()) {
+                    //finished measurements:
+                    let dur = moment.duration(moment(element.end).diff(moment(element.begin)))
+                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                } else {
+                    //active measurements:
+                    let dur = moment.duration(moment().diff(moment(element.begin)))
+                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                }
+
+            } else if (printId) {
+                console.log(element.id + ':', element.project.name, '|', element.activity.name)
+            } else if (program.argos || program.argosbutton) {
+                if (endpoint == 'timesheets/recent') {
+                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash="kimai restart', element.id, '" terminal=false refresh=true')
+                } else if (endpoint == 'timesheets/active') {
+                    let dur = moment.duration(moment().diff(moment(element.begin)))
+                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash="kimai stop', element.id, '" terminal=false refresh=true')
+                }
+            } else {
+                console.log(element.project.name, '|', element.activity.name)
+            }
+        }
+    }
+    console.log()
+}
+
+
+/**
  * Interactive ui: select measurement from a list of measurements
  * @param {} thelist 
  */
@@ -388,7 +478,6 @@ function uiSelectMeasurement(thelist) {
  * @param {string} message Prompt message
  */
 function uiAutocompleteSelect(thelist, message) {
-
     return new Promise((resolve, reject) => {
         const choices = []
         const names = []
@@ -429,61 +518,6 @@ function uiAutocompleteSelect(thelist, message) {
 }
 
 
-
-
-/**
- * Prints list to terminal
- * 
- * @param {array} arr Items to list
- * @param {string} endpoint for selecting display layout
- * @param {boolean} verbose
- */
-function printList(arr, endpoint, options = false) {
-    verbose = options.verbose || false
-    printId = options.printId || false
-    if (verbose) {
-        console.log()
-        if (arr.length > 1) {
-            console.log(arr.length + ' results:')
-        } else if (arr.length == 0) {
-            console.log('No results')
-        } else {
-            console.log('One result:')
-        }
-    }
-    for (let i = 0; i < arr.length; i++) {
-        const element = arr[i];
-
-        if (endpoint == 'projects' || endpoint == 'activities') {
-            if (verbose) {
-                console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
-            } else if (printId) {
-                console.log(element.id + ':', element.name)
-            } else {
-                console.log(element.name)
-            }
-
-        } else { //measurements
-            if (verbose) {
-                if (arr.length > 1) {
-                    console.log((i + 1) + ":")
-                }
-                console.log('   Id: ' + element.id)
-                console.log('   Project: ' + element.project.name, '(id:' + element.project.id + ')')
-                console.log('   Customer: ' + element.project.customer.name, '(id:' + element.project.customer.id + ')')
-                console.log('   Activity: ' + element.activity.name, '(id:' + element.activity.id + ')')
-                console.log()
-            } else if (printId) {
-                console.log(element.id + ':', element.project.name, '|', element.activity.name)
-            } else {
-                console.log(element.project.name, '|', element.activity.name)
-            }
-
-        }
-    }
-    console.log()
-}
-
 /**
  * Finds settings file path
  * 
@@ -492,26 +526,28 @@ function printList(arr, endpoint, options = false) {
  * @returns false: If no settings found
  */
 function iniPath(verbose) {
-    //different settings.ini path for developement and pkg version
-    const root = [
+    //different settings.ini path for developement and pkg and windows installer version
+    const iniRoot = [
         path.dirname(process.execPath),
         __dirname
     ]
-    const settingsPathPkg = path.join(root[0], '/settings.ini')
-    const settingsPathNode = path.join(root[1], '/settings.ini')
+
+    if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
+
     if (verbose) {
         console.log('Looking for settings.ini in the following places:')
-        console.log(settingsPathPkg)
-        console.log(settingsPathNode)
+        console.log(iniRoot)
     }
-    if (fs.existsSync(settingsPathPkg)) {
-        return settingsPathPkg
-    } else if (fs.existsSync(settingsPathNode)) {
-        return settingsPathNode
-    } else {
 
-        return false
+    for (let i = 0; i < iniRoot.length; i++) {
+        const currentIniPath = path.join(iniRoot[i], '/settings.ini')
+        if (fs.existsSync(currentIniPath)) {
+            return currentIniPath
+        }
     }
+
+    // no ini found so:
+    return false
 }
 
 /**
@@ -523,13 +559,13 @@ function iniPath(verbose) {
 function checkSettings(verbose = false) {
     return new Promise((resolve, reject) => {
         const settingsPath = iniPath(verbose)
-        if (verbose) console.log("found at: ", settingsPath)
         if (settingsPath) {
+            if (verbose) console.log("settings.ini found at: ", settingsPath)
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
         } else {
             console.log('Settings.ini not found')
-            uiAskForSettings()
+            uiAskForSettings(verbose)
                 .then(settings => {
                     resolve(settings)
                 })
@@ -540,8 +576,10 @@ function checkSettings(verbose = false) {
 
 /**
  * Interactive ui: asks for settings than saves them
+ * 
+ * @param {boolean} verbose
  */
-function uiAskForSettings() {
+function uiAskForSettings(verbose = false) {
     return new Promise((resolve, reject) => {
         let questions = [
             {
@@ -566,11 +604,33 @@ function uiAskForSettings() {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
-                fs.writeFileSync('./settings.ini', ini.stringify(settings))
-                console.log('settings saved to ' + iniPath())
+
+                const thePath = iniFullPath()
+                if (verbose) { console.log('Trying to save settings to: '.thePath) }
+
+                fs.writeFileSync(thePath, ini.stringify(settings))
+                console.log('Settings saved to ' + iniPath())
                 resolve(settings)
             });
     })
+}
+
+
+/**
+ * Returns the ini save path based on os and installation type, creates folder if necessary
+ */
+function iniFullPath() {
+    let installDir = path.dirname(process.execPath).split("\\")
+
+    //I should replace this tererible if to some registry value readin, maybe for uninstaller
+    if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
+        if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
+            fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
+        }
+        return path.join(appdata, 'kimai2-cmd', 'settings.ini')
+    } else {
+        return './settings.ini'
+    }
 }
 
 
@@ -592,8 +652,9 @@ program
     .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
     .option('-v, --verbose', 'verbose, longer logging', false)
     .option('-i, --id', 'show id of elements when listing', false)
-// .option('-r, --rainmeter', 'generate rainmeter files')
-// .option('-a, --argos', 'argos/bitbar output')
+    // .option('-r, --rainmeter', 'generate rainmeter files')
+    .option('-b, --argosbutton', 'argos/bitbar button output')
+    .option('-a, --argos', 'argos/bitbar output')
 
 program.command('start [project] [activity]')
     .description('start selected project and activity')
@@ -622,12 +683,12 @@ program.command('restart [id]')
             })
     })
 
-program.command('stop')
-    .description('stop all measurements')
-    .action(function () {
+program.command('stop [id]')
+    .description('stop all or selected measurement measurements, [id] is optional')
+    .action(function (measurementId) {
         checkSettings()
             .then(settings => {
-                kimaiStop(settings)
+                kimaiStop(settings, measurementId)
             })
     })
 
@@ -664,6 +725,15 @@ program.command('list-activities')
         checkSettings()
             .then(settings => {
                 kimaiList(settings, 'activities', true, { verbose: program.verbose, printId: program.id })
+            })
+    })
+
+program.command('url')
+    .description('prints the url of the server')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                console.log(settings.serversettings.kimaiurl)
             })
     })
 
