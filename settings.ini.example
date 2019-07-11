@@ -3,5 +3,6 @@ kimaiurl=https://demo.kimai.org
 username=anna_admin
 password=apipassword
 
-[bitbar]
+[argos_bitbar]
 kimaipath=/path/to/kimai2-cmd-macos
+buttonlength=10

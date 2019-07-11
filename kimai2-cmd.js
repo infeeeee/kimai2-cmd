@@ -39,7 +39,6 @@ var pjson = require('./package.json');
  * @param {object} options All of them are optional: 
  * options.qs querystring
  * options.reqbody request body
- * options.verbose Verbose
  * @returns {object} The response body as an object
  * 
  */
@@ -47,9 +46,8 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
     //default options to false:
     const qs = options.qs || false
     const reqbody = options.reqbody || false
-    const verbose = options.verbose || false
-
-    if (verbose) {
+    
+    if (program.verbose) {
         console.log("calling kimai:", httpMethod, kimaiMethod, serversettings)
     }
 
@@ -71,7 +69,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
             options.headers['Content-Type'] = 'application/json'
         }
 
-        if (verbose) {
+        if (program.verbose) {
             console.log("request options:", options)
         }
 
@@ -82,7 +80,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
 
             let jsonarr = JSON.parse(response.body)
 
-            if (verbose) {
+            if (program.verbose) {
                 console.log("Response body:", jsonarr)
             }
 
@@ -102,9 +100,8 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
  * Interactive ui: displays the main menu
  * 
  * @param {object} settings The full settings object read from the ini
- * @param {boolean} verbose 
  */
-function uiMainMenu(settings, verbose = false) {
+function uiMainMenu(settings) {
     inquirer
         .prompt([
             {
@@ -129,7 +126,7 @@ function uiMainMenu(settings, verbose = false) {
             }
         ])
         .then(answers => {
-            if (verbose) {
+            if (program.verbose) {
                 console.log('selected answer: ' + answers.mainmenu)
             }
             switch (answers.mainmenu) {
@@ -143,7 +140,7 @@ function uiMainMenu(settings, verbose = false) {
                         .then(res => uiMainMenu(res[0]))
                     break;
                 case 'start':
-                    uiKimaiStart(settings, verbose)
+                    uiKimaiStart(settings)
                         .then(_ => uiMainMenu(settings))
                     break;
                 case 'stop-all':
@@ -161,20 +158,20 @@ function uiMainMenu(settings, verbose = false) {
                     break;
 
                 case 'list-active':
-                    kimaiList(settings, 'timesheets/active', true, { verbose: verbose, printId: program.id })
-                        .then(res => uiMainMenu(res[0], verbose))
+                    kimaiList(settings, 'timesheets/active', true)
+                        .then(res => uiMainMenu(res[0]))
                     break;
                 case 'list-recent':
-                    kimaiList(settings, 'timesheets/recent', true, { verbose: verbose, printId: program.id })
-                        .then(res => uiMainMenu(res[0], verbose))
+                    kimaiList(settings, 'timesheets/recent', true)
+                        .then(res => uiMainMenu(res[0]))
                     break;
                 case 'list-projects':
-                    kimaiList(settings, 'projects', true, { verbose: verbose, printId: program.id })
-                        .then(res => uiMainMenu(res[0], verbose))
+                    kimaiList(settings, 'projects', true)
+                        .then(res => uiMainMenu(res[0]))
                     break;
                 case 'list-activities':
-                    kimaiList(settings, 'activities', true, { verbose: verbose, printId: program.id })
-                        .then(res => uiMainMenu(res[0], verbose))
+                    kimaiList(settings, 'activities', true)
+                        .then(res => uiMainMenu(res[0]))
                     break;
                 default:
                     break;
@@ -203,7 +200,7 @@ function kimaiRestart(settings, id) {
  * 
  * @param {object} settings All settings read from ini
  */
-function uiKimaiStart(settings, verbose = false) {
+function uiKimaiStart(settings) {
     return new Promise((resolve, reject) => {
         const selected = {}
         kimaiList(settings, 'projects', false)
@@ -221,7 +218,7 @@ function uiKimaiStart(settings, verbose = false) {
             })
             .then(res => {
                 selected.activityId = res.id
-                return kimaiStart(settings, selected.projectId, selected.activityId, verbose)
+                return kimaiStart(settings, selected.projectId, selected.activityId)
             })
             .then(_ => {
                 resolve()
@@ -236,7 +233,7 @@ function uiKimaiStart(settings, verbose = false) {
  * @param {string} project Id of project
  * @param {string} activity Id of activity
  */
-function kimaiStart(settings, project, activity, verbose) {
+function kimaiStart(settings, project, activity) {
     return new Promise((resolve, reject) => {
 
         let body = {
@@ -244,11 +241,11 @@ function kimaiStart(settings, project, activity, verbose) {
             project: project,
             activity: activity
         }
-        if (verbose) {
+        if (program.verbose) {
             console.log("kimaistart calling api:", body)
         }
 
-        callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body, verbose: verbose })
+        callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body })
             .then(res => {
                 console.log('Started: ' + res.id)
                 resolve()
@@ -263,11 +260,10 @@ function kimaiStart(settings, project, activity, verbose) {
  * @param {object} settings 
  * @param {string} name The name to search for
  * @param {string} endpoint 
- * @param {boolean} verbose 
  */
-function findId(settings, name, endpoint, verbose) {
+function findId(settings, name, endpoint) {
     return new Promise((resolve, reject) => {
-        kimaiList(settings, endpoint, false, { verbose: verbose })
+        kimaiList(settings, endpoint, false)
             .then(res => {
                 const list = res[1]
                 for (let i = 0; i < list.length; i++) {
@@ -339,19 +335,15 @@ function callKimaiStop(settings, jsonList, i = 0) {
  * @param {boolean} print If true, it prints to the terminal
  * @param {object} options Options: 
  * options.filter: filter the query,
- * options.printId: print ids with list
- * options.verbose 
  * @returns {array} res[0]: settings, res[1]: list of elements
  */
 function kimaiList(settings, endpoint, print = false, options = false) {
     const filter = options.filter || false
-    const verbose = options.verbose || false
-    const printId = options.printId || false
     return new Promise((resolve, reject) => {
         callKimaiApi('GET', endpoint, settings.serversettings, { qs: filter })
             .then(jsonList => {
                 if (print) {
-                    printList(jsonList, endpoint, { verbose: verbose, printId: printId, kimaipath: settings.bitbar.kimaipath })
+                    printList(settings, jsonList, endpoint)
                 }
                 resolve([settings, jsonList])
             })
@@ -361,38 +353,16 @@ function kimaiList(settings, endpoint, print = false, options = false) {
     })
 }
 
-/**
- * Check if it's a mac. On mac bitbar requires the full path.
- * 
- * @param {path} exepath Path to executable
- */
-function argosCheckDarwin(exepath) {
-    if (platform == "darwin") {
-        return exepath
-    } else {
-        return 'kimai'
-    }
-}
-
-
 
 /**
  * Prints list to terminal
  * 
+ * @param {object} settings The full settings object read from the ini
  * @param {array} arr Items to list
  * @param {string} endpoint for selecting display layout
- * @param {object} options 
- * options.printId: print ids with list
- * options.kimaipath: path to kimai on mac for bitbar
- * options.verbose 
  */
-function printList(arr, endpoint, options = false) {
-    const verbose = options.verbose || false
-    const printId = options.printId || false
-    const kimaiExe = argosCheckDarwin(options.kimaipath)
-
-
-    if (verbose) {
+function printList(settings, arr, endpoint) {
+    if (program.verbose) {
         console.log()
         if (arr.length > 1) {
             console.log(arr.length + ' results:')
@@ -415,16 +385,16 @@ function printList(arr, endpoint, options = false) {
         const element = arr[i];
 
         if (endpoint == 'projects' || endpoint == 'activities') {
-            if (verbose) {
+            if (program.verbose) {
                 console.log((i + 1) + ':', element.name, '(id:' + element.id + ')')
-            } else if (printId) {
+            } else if (program.id) {
                 console.log(element.id + ':', element.name)
             } else {
                 console.log(element.name)
             }
 
         } else { //measurements
-            if (verbose) {
+            if (program.verbose) {
                 if (arr.length > 1) {
                     console.log((i + 1) + ":")
                 }
@@ -444,18 +414,18 @@ function printList(arr, endpoint, options = false) {
                     console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
                 }
 
-            } else if (printId) {
+            } else if (program.id) {
                 console.log(element.id + ':', element.project.name, '|', element.activity.name)
             } else if (program.argos) {
                 if (endpoint == 'timesheets/recent') {
-                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash=' + kimaiExe + ' param1=restart param2=' + element.id + ' terminal=false refresh=true')
+                    console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash=' + settings.argos_bitbar.kimaipath + ' param1=restart param2=' + element.id + ' terminal=false refresh=true')
                 } else if (endpoint == 'timesheets/active') {
                     let dur = moment.duration(moment().diff(moment(element.begin)))
-                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash=' + kimaiExe + ' param1=stop param2=' + element.id + ' terminal=false refresh=true')
+                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash=' + settings.argos_bitbar.kimaipath + ' param1=stop param2=' + element.id + ' terminal=false refresh=true')
                 }
             } else if (program.argosbutton) {
                 let dur = moment.duration(moment().diff(moment(element.begin)))
-                console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '| length=10')
+                console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '| length=' + settings.argos_bitbar.buttonlength)
             } else {
                 console.log(element.project.name, '|', element.activity.name)
                 console.log()
@@ -543,11 +513,10 @@ function uiAutocompleteSelect(thelist, message) {
 /**
  * Finds settings file path
  * 
- * @param {boolean} verbose
  * @returns string: Path to settings.ini
  * @returns false: If no settings found
  */
-function iniPath(verbose) {
+function iniPath() {
     //different settings.ini path for developement and pkg and windows installer version
     const iniRoot = [
         path.dirname(process.execPath),
@@ -556,7 +525,7 @@ function iniPath(verbose) {
 
     if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
 
-    if (verbose) {
+    if (program.verbose) {
         console.log('Looking for settings.ini in the following places:')
         console.log(iniRoot)
     }
@@ -575,19 +544,18 @@ function iniPath(verbose) {
 /**
  * Checks if settings file exists, if not it's asks for settings
  * 
- * @param {boolean} verbose 
  * @return {object} settings: all settings read from the settings file
  */
-function checkSettings(verbose = false) {
+function checkSettings() {
     return new Promise((resolve, reject) => {
-        const settingsPath = iniPath(verbose)
+        const settingsPath = iniPath()
         if (settingsPath) {
-            if (verbose) console.log("settings.ini found at: ", settingsPath)
+            if (program.verbose) console.log("settings.ini found at: ", settingsPath)
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
         } else {
             console.log('Settings.ini not found')
-            uiAskForSettings(verbose)
+            uiAskForSettings()
                 .then(settings => {
                     resolve(settings)
                 })
@@ -599,9 +567,8 @@ function checkSettings(verbose = false) {
 /**
  * Interactive ui: asks for settings than saves them
  * 
- * @param {boolean} verbose
  */
-function uiAskForSettings(verbose = false) {
+function uiAskForSettings() {
     return new Promise((resolve, reject) => {
         let questions = [
             {
@@ -626,12 +593,17 @@ function uiAskForSettings(verbose = false) {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
-                settings.bitbar = {
-                    kimaipath: process.execPath
+                settings.argos_bitbar = {}
+
+                if (platform == "darwin") {
+                    settings.argos_bitbar.kimaipath = process.execPath
+                } else {
+                    settings.argos_bitbar.kimaipath = "kimai"
                 }
+                settings.argos_bitbar.buttonlength = 10
 
                 const thePath = iniFullPath()
-                if (verbose) { console.log('Trying to save settings to: '.thePath) }
+                if (program.verbose) { console.log('Trying to save settings to: '.thePath) }
 
                 fs.writeFileSync(thePath, ini.stringify(settings))
                 console.log('Settings saved to ' + iniPath())
@@ -687,14 +659,14 @@ program.command('start [project] [activity]')
         const selected = {}
         checkSettings()
             .then(settings => {
-                findId(settings, project, 'projects', program.verbose)
+                findId(settings, project, 'projects')
                     .then(projectid => {
                         selected.projectId = projectid
-                        return findId(settings, activity, 'activities', program.verbose)
+                        return findId(settings, activity, 'activities')
                     })
                     .then(activityid => {
                         selected.activityId = activityid
-                        return kimaiStart(settings, selected.projectId, selected.activityId, program.verbose)
+                        return kimaiStart(settings, selected.projectId, selected.activityId)
                     })
             })
     })
@@ -722,7 +694,7 @@ program.command('list-active')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'timesheets/active', true, { verbose: program.verbose, printId: program.id })
+                kimaiList(settings, 'timesheets/active', true)
             })
     })
 
@@ -731,7 +703,7 @@ program.command('list-recent')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'timesheets/recent', true, { verbose: program.verbose, printId: program.id })
+                kimaiList(settings, 'timesheets/recent', true)
             })
     })
 
@@ -740,7 +712,7 @@ program.command('list-projects')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'projects', true, { verbose: program.verbose, printId: program.id })
+                kimaiList(settings, 'projects', true)
             })
     })
 
@@ -749,7 +721,7 @@ program.command('list-activities')
     .action(function () {
         checkSettings()
             .then(settings => {
-                kimaiList(settings, 'activities', true, { verbose: program.verbose, printId: program.id })
+                kimaiList(settings, 'activities', true)
             })
     })
 
@@ -773,8 +745,8 @@ program.parse(process.argv);
 
 //interactive mode if no option added
 if (!program.args.length) {
-    checkSettings(program.verbose)
+    checkSettings()
         .then(settings => {
-            uiMainMenu(settings, program.verbose)
+            uiMainMenu(settings)
         })
 }
