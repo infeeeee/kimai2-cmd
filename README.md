@@ -115,7 +115,7 @@ You can create your settings.ini file manually, by downloading, renaming and edi
 
 On the windows installer version settings.ini location: `C:\Users\Username\AppData\Roaming\kimai2-cmd\settings.ini`
 
-Integration settings are not asked during first run, you have to change them manually in settings.ini. If you don't use an integration, you can safely ignore its settings.
+Integration settings are not asked during first run, you have to change them manually in settings.ini. If you don't use an integration, you can safely ignore it's settings.
 
 ## Developement version
 
