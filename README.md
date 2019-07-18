@@ -25,6 +25,8 @@ Integration:
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
 - [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
+Requests for integrations with other softwares are welcomed! Just open an issue and show an example output, what you need.
+
 ## Installation
 
 Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required.
