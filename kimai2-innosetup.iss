@@ -26,11 +26,12 @@ ArchitecturesAllowed=x64
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "createini"; Description: "Create settings.ini during installation"; GroupDescription: "Server settings"; Flags: checkedonce
 
 [Files]
 Source: "builds\kimai2-cmd.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "settings.ini.example"; DestDir: "{userappdata}\kimai2-cmd"; DestName: "settings.ini"; Flags: onlyifdoesntexist uninsneveruninstall recursesubdirs; AfterInstall: InitializeWizard
+Source: "settings.ini.example"; DestDir: "{userappdata}\kimai2-cmd"; DestName: "settings.ini"; Flags: onlyifdoesntexist uninsneveruninstall recursesubdirs; Tasks: createini
 
 [Icons]
 Name: "{group}\kimai2-cmd"; Filename: "{app}\kimai2-cmd.exe"
@@ -41,9 +42,9 @@ Name: "{commondesktop}\kimai2-cmd"; Filename: "{app}\kimai2-cmd.exe"; Tasks: des
 Filename: "{app}\kimai2-cmd.exe"; Description: "{cm:LaunchProgram,kimai2-cmd}"; Flags: nowait postinstall skipifsilent
 
 [INI]
-Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "kimaiurl"; String: "{code:GetKimaiUrl}"
-Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "username"; String: "{code:GetUserName}"
-Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "password"; String: "{code:GetPassword}"
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "kimaiurl"; String: "{code:GetKimaiUrl}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "username"; String: "{code:GetUserName}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "password"; String: "{code:GetPassword}"; Tasks: createini
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -55,13 +56,23 @@ var AuthPage: TInputQueryWizardPage;
 
 procedure InitializeWizard;
 begin
-AuthPage := CreateInputQueryPage(wpInstalling,
+AuthPage := CreateInputQueryPage(wpSelectTasks,
     'Kimai2 settings', 'Please enter your server url and account information',
-    '');
+    'You can modify this later in AppData\Roaming\kimai2-cmd\settings.ini');
   AuthPage.Add('Kimai2 url:', False);
   AuthPage.Add('Username:', False);
   AuthPage.Add('API password:', False);
 end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  { Skip pages that shouldn't be shown }
+  if (PageID = AuthPage.ID) and ( not WizardIsTaskSelected('createini')) then
+    Result := True
+  else
+    Result := False;
+end;
+
 
 function AuthForm_NextButtonClick(Page: TWizardPage): Boolean;
 begin
