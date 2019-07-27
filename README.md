@@ -21,30 +21,29 @@ UI:
 
 Integration:
 - [x] Portable executable for all three platforms
-- [ ] Installer for windows
+- [x] Installer for windows
 - [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
 - [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
+Requests for integrations with other softwares are welcomed! Just open an issue and show an example output, what you need.
+
 ## Installation
 
-Download executable from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). Standalone executable, no installation required.
+Download from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). 
 
-You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> User profile -> API 
+You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> User profile -> API.
 
 ### Notes on Windows
 
-Add the path of the containing folder to the %PATH% environment variable so you can run it from command line/powershell system wide. I didn't find any reliable way to do this from command line, so follow this guide. It should work on win 7-10
+Portable executable or installer available. 
 
-- Open start menu and type: SystemPropertiesAdvanced.exe
-- Go to Advanced tab click Environment variables
-- Select path on the top pane, click Edit
-- On win 7,8 add the following to the end of the variable: `;c:\path\to\containing\folder`
-- On win 10 click New and type `c:\path\to\containing\folder`
-- Log off and on if not working
+Installer automatically adds the install path to the %PATH% environment variable, so you can use it from command line/powershell system wide. Sign out and in if it's not working.
+
+With the portable version you have to do this manually. Follow [this tutorial](https://stackoverflow.com/questions/44272416/how-to-add-a-folder-to-path-environment-variable-in-windows-10-with-screensho) or a similar one if you don't know how to do it.
 
 ### Notes on Linux/Mac
 
-On the following terminal examples use the file name you downloaded. 
+Portable executable only. On the following terminal examples use the file name you downloaded. 
 
 Make the downloaded binary executable:
 ```
@@ -121,7 +120,7 @@ Integration settings are not asked during first run, you have to change them man
 
 ### Installation
 
-requirements:
+Prerequisites:
 - node js 10+
 - git
 
@@ -133,7 +132,7 @@ npm install
 
 ### Build
 
-Requirements: globally installed [pkg](https://github.com/zeit/pkg): 
+Prerequisite: globally installed [pkg](https://github.com/zeit/pkg): 
 
 ```
 npm install pkg -g
@@ -145,7 +144,6 @@ Build for current platform and architecture
 npm run build-current
 ```
 
-
 Build x64 executables for linux, mac on linux or on mac
 
 ```
@@ -154,6 +152,12 @@ npm run build-nix
 
 About building for other platforms see pkg's documentation, or open an issue and I can build it for you.
 
+### Installer (Windows only)
+
+Prerequisite: [Inno Setup](http://www.jrsoftware.org/isinfo.php)
+
+- Create a windows build: `npm run build-current`
+- Open `kimai2-innosetup.iss` in Inno Setup
 
 ### Usage
 

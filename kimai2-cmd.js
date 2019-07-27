@@ -46,7 +46,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
     //default options to false:
     const qs = options.qs || false
     const reqbody = options.reqbody || false
-    
+
     if (program.verbose) {
         console.log("calling kimai:", httpMethod, kimaiMethod, serversettings)
     }
@@ -102,6 +102,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
  * @param {object} settings The full settings object read from the ini
  */
 function uiMainMenu(settings) {
+    console.log()
     inquirer
         .prompt([
             {
@@ -406,32 +407,59 @@ function printList(settings, arr, endpoint) {
 
                 if (moment(element.end).isValid()) {
                     //finished measurements:
-                    let dur = moment.duration(moment(element.end).diff(moment(element.begin)))
-                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                    console.log('   Duration: ' + formattedDuration(element.begin, element.end))
                 } else {
                     //active measurements:
-                    let dur = moment.duration(moment().diff(moment(element.begin)))
-                    console.log('   Duration: ' + dur.hours() + ':' + dur.minutes())
+                    console.log('   Duration: ' + formattedDuration(element.begin))
                 }
 
             } else if (program.id) {
                 console.log(element.id + ':', element.project.name, '|', element.activity.name)
             } else if (program.argos) {
+                //Argos
                 if (endpoint == 'timesheets/recent') {
                     console.log('--' + element.project.name + ',', element.activity.name, '|', 'bash=' + settings.argos_bitbar.kimaipath + ' param1=restart param2=' + element.id + ' terminal=false refresh=true')
                 } else if (endpoint == 'timesheets/active') {
-                    let dur = moment.duration(moment().diff(moment(element.begin)))
-                    console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '|', 'bash=' + settings.argos_bitbar.kimaipath + ' param1=stop param2=' + element.id + ' terminal=false refresh=true')
+                    console.log(formattedDuration(element.begin), element.project.name + ',', element.activity.name, '|', 'bash=' + settings.argos_bitbar.kimaipath + ' param1=stop param2=' + element.id + ' terminal=false refresh=true')
                 }
             } else if (program.argosbutton) {
-                let dur = moment.duration(moment().diff(moment(element.begin)))
-                console.log(dur.hours() + ':' + dur.minutes(), element.project.name + ',', element.activity.name, '| length=' + settings.argos_bitbar.buttonlength)
+                //Argosbutton
+                console.log(formattedDuration(element.begin), element.project.name + ',', element.activity.name, '| length=' + settings.argos_bitbar.buttonlength)
             } else {
-                console.log(element.project.name, '|', element.activity.name)
-                console.log()
+                //Regular output
+                if (moment(element.end).isValid()) {
+                    //finished measurements:
+                    console.log(element.project.name, '|', element.activity.name)
+                } else {
+                    //active measurements:
+                    console.log(formattedDuration(element.begin), element.project.name, '|', element.activity.name)
+                }
             }
         }
     }
+}
+
+/**
+ * Returns duration between the two moments or between beginning and now. padded to minimum two digits.
+ * 
+ * @param {moment} begin beginning moment
+ * @param {moment} end optional, end moment
+ */
+function formattedDuration(begin, end) {
+    let momentDuration = moment.duration(moment(end).diff(moment(begin)))
+
+    let hrs = momentDuration.hours()
+    let mins = momentDuration.minutes()
+
+    if (hrs.toString().length == 1) {
+        hrs = "0" + hrs
+    }
+
+    if (mins.toString().length == 1) {
+        mins = "0" + mins
+    }
+
+    return hrs + ':' + mins
 }
 
 
