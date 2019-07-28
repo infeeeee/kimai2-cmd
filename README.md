@@ -2,6 +2,8 @@
 
 Command line client for [Kimai2](https://www.kimai.org/), the open source, self-hosted time tracker.
 
+![interactive restart gif](assets/interactive-restart.gif)
+
 To use this program you have to install Kimai2 first!
 
 This client is still under developement. See planned features in the next section
@@ -66,6 +68,8 @@ Two usage modes: interactive and classic ui
 
 ### Interactive ui
 
+![interactive start gif](assets/interactive-start.gif)
+
 If you start without any commands, you will get to the interactive UI. Use your keyboard's arrow keys for navigation. On the `Start new measurement` menu item you can search for project and activity names.
 
 You can exit with ctrl+c any time.
@@ -108,7 +112,9 @@ kimai2-cmd start "foo" "bar bar"
 
 ### Settings and first run
 
-All settings stored in the settings.ini file. Place this file to the same directory as the executable. If no settings file found you will drop to the interactive UI, where you can add your settings. 
+All settings stored in the settings.ini file. Place this file to the same directory as the executable. If no settings file found you will drop to the interactive UI, where you can add your settings:
+
+![interactive settings gif](assets/interactive-settings.gif)
 
 You can create your settings.ini file manually, by downloading, renaming and editing [settings.ini.example](https://github.com/infeeeee/kimai2-cmd/blob/master/settings.ini.example).
 
