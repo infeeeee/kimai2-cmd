@@ -6,7 +6,7 @@ Command line client for [Kimai2](https://www.kimai.org/), the open source, self-
 
 To use this program you have to install Kimai2 first!
 
-This client is still under developement. See planned features in the next section
+This client is still under development. See planned features in the next section
 
 ## Current and planned features
 
@@ -122,7 +122,7 @@ On the windows installer version settings.ini location: `C:\Users\Username\AppDa
 
 Integration settings are not asked during first run, you have to change them manually in settings.ini. If you don't use an integration, you can safely ignore it's settings.
 
-## Developement version
+## Development version
 
 ### Installation
 
@@ -193,7 +193,7 @@ npm start start foo bar
 node kimai2-cmd.js start foo bar
 ```
 
-On the first run it will ask for your settings, but you can just copy settings.ini.example to settings.ini and modify it with your favourite text editor
+On the first run it will ask for your settings, but you can just copy settings.ini.example to settings.ini and modify it with your favorite text editor
 
 ## Troubleshooting
 
