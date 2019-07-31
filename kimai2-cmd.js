@@ -677,7 +677,7 @@ program
     .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
     .option('-v, --verbose', 'verbose, longer logging', false)
     .option('-i, --id', 'show id of elements when listing', false)
-    // .option('-r, --rainmeter', 'generate rainmeter files')
+    .option('-r, --rainmeter', 'generate rainmeter files')
     .option('-b, --argosbutton', 'argos/bitbar button output')
     .option('-a, --argos', 'argos/bitbar output')
 
