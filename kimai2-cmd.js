@@ -631,7 +631,7 @@ function uiAskForSettings() {
                 settings.argos_bitbar.buttonlength = 10
 
                 const thePath = iniFullPath()
-                if (program.verbose) { console.log('Trying to save settings to: '.thePath) }
+                if (program.verbose) { console.log('Trying to save settings to: ' + thePath) }
 
                 fs.writeFileSync(thePath, ini.stringify(settings))
                 console.log('Settings saved to ' + iniPath())
