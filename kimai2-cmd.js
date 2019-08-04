@@ -379,7 +379,7 @@ function printList(settings, arr, endpoint) {
             console.log('No active measurements')
         }
         if (program.argosbutton) {
-            console.log("Kimai2")
+            console.log("Kimai2 |")
         }
     }
     for (let i = 0; i < arr.length; i++) {
