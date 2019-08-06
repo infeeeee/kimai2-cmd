@@ -62,6 +62,14 @@ To remove:
 sudo rm /usr/bin/kimai
 ```
 
+### Install with npm
+
+If npm installed you can install it with the following command:
+
+```
+npm install -g infeeeee/kimai2-cmd
+```
+
 ## Usage
 
 Two usage modes: interactive and classic ui
