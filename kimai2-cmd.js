@@ -663,7 +663,7 @@ function iniFullPath() {
     } else {
         if (program.verbose) {console.log('This is an npm version')}
         //For npm version:
-        return './settings.ini'
+        return 'settings.ini'
     }
 }
 
