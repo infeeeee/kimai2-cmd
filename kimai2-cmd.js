@@ -548,8 +548,8 @@ function uiAutocompleteSelect(thelist, message) {
 function iniPath() {
     //different settings.ini path for developement and pkg and windows installer version
     const iniRoot = [
-        path.dirname(process.execPath),
-        __dirname
+        path.dirname(process.execPath),//This is for pkg version
+        __dirname//This is for npm version
     ]
 
     if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
@@ -647,14 +647,22 @@ function uiAskForSettings() {
  */
 function iniFullPath() {
     let installDir = path.dirname(process.execPath).split("\\")
+    let dirArr = __dirname.split(path.sep)
 
-    //I should replace this tererible if to some registry value readin, maybe for uninstaller
+    //Maybe I should replace this terrible 'if' with some registry value reading
     if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
+        if (program.verbose) { console.log('This is an installer based windows installation') }
         if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
             fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
         }
         return path.join(appdata, 'kimai2-cmd', 'settings.ini')
+    } else if (dirArr[0] == 'snapshot' || dirArr[1] == 'snapshot') {
+        if (program.verbose) {console.log('This is a pkg version')}
+        //for pkg version:
+        return path.join(path.dirname(process.execPath), 'settings.ini')
     } else {
+        if (program.verbose) {console.log('This is an npm version')}
+        //For npm version:
         return './settings.ini'
     }
 }
