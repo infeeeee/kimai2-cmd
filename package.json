@@ -3,7 +3,9 @@
   "version": "0.2.4",
   "description": "Command line client for Kimai2",
   "main": "kimai2-cmd.js",
-  "bin": "kimai2-cmd",
+  "bin": {
+    "kimai2-cmd": "kimai2-cmd.js"
+  },
   "scripts": {
     "start": "node kimai2-cmd.js",
     "build-nix": "pkg --out-path builds package.json",
