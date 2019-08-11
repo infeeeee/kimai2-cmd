@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /* -------------------------------------------------------------------------- */
 /*                                   Modules                                  */
 /* -------------------------------------------------------------------------- */
@@ -379,7 +380,7 @@ function printList(settings, arr, endpoint) {
             console.log('No active measurements')
         }
         if (program.argosbutton) {
-            console.log("Kimai2")
+            console.log("Kimai2 |")
         }
     }
     for (let i = 0; i < arr.length; i++) {
@@ -545,23 +546,17 @@ function uiAutocompleteSelect(thelist, message) {
  * @returns false: If no settings found
  */
 function iniPath() {
-    //different settings.ini path for developement and pkg and windows installer version
-    const iniRoot = [
-        path.dirname(process.execPath),
-        __dirname
-    ]
-
-    if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
-
     if (program.verbose) {
         console.log('Looking for settings.ini in the following places:')
         console.log(iniRoot)
     }
 
-    for (let i = 0; i < iniRoot.length; i++) {
-        const currentIniPath = path.join(iniRoot[i], '/settings.ini')
-        if (fs.existsSync(currentIniPath)) {
-            return currentIniPath
+    for (var key in iniRoot) {
+        if (iniRoot.hasOwnProperty(key)) {
+            const currentIniPath = path.join(iniRoot[key], '/settings.ini')
+            if (fs.existsSync(currentIniPath)) {
+                return currentIniPath
+            }
         }
     }
 
@@ -631,7 +626,7 @@ function uiAskForSettings() {
                 settings.argos_bitbar.buttonlength = 10
 
                 const thePath = iniFullPath()
-                if (program.verbose) { console.log('Trying to save settings to: '.thePath) }
+                if (program.verbose) { console.log('Trying to save settings to: ' + thePath) }
 
                 fs.writeFileSync(thePath, ini.stringify(settings))
                 console.log('Settings saved to ' + iniPath())
@@ -646,15 +641,23 @@ function uiAskForSettings() {
  */
 function iniFullPath() {
     let installDir = path.dirname(process.execPath).split("\\")
+    let dirArr = __dirname.split(path.sep)
 
-    //I should replace this tererible if to some registry value readin, maybe for uninstaller
+    //Maybe I should replace this terrible 'if' with some registry value reading
     if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
+        if (program.verbose) { console.log('This is an installer based windows installation') }
         if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
             fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
         }
-        return path.join(appdata, 'kimai2-cmd', 'settings.ini')
+        return path.join(iniRoot.wininstaller, 'settings.ini')
+    } else if (dirArr[0] == 'snapshot' || dirArr[1] == 'snapshot') {
+        if (program.verbose) { console.log('This is a pkg version') }
+        //for pkg version:
+        return path.join(iniRoot.pkg, 'settings.ini')
     } else {
-        return './settings.ini'
+        if (program.verbose) { console.log('This is an npm version') }
+        //For npm version:
+        return path.join(iniRoot.npm, 'settings.ini')
     }
 }
 
@@ -666,6 +669,20 @@ function iniFullPath() {
  */
 function sanitizeServerUrl(kimaiurl) {
     return kimaiurl.replace(/\/+$/, "");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Settings.ini locations                           */
+/* -------------------------------------------------------------------------- */
+
+//different settings.ini path for developement and pkg and windows installer version
+const iniRoot = {
+    pkg: path.dirname(process.execPath),//This is for pkg version
+    npm: __dirname//This is for npm version
+}
+
+if (appdata) {
+    iniRoot.wininstaller = path.join(appdata, '/kimai2-cmd')
 }
 
 /* -------------------------------------------------------------------------- */
