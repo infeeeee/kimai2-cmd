@@ -546,23 +546,17 @@ function uiAutocompleteSelect(thelist, message) {
  * @returns false: If no settings found
  */
 function iniPath() {
-    //different settings.ini path for developement and pkg and windows installer version
-    const iniRoot = [
-        path.dirname(process.execPath),//This is for pkg version
-        __dirname//This is for npm version
-    ]
-
-    if (appdata) { iniRoot.push(path.join(appdata, '/kimai2-cmd')) }
-
     if (program.verbose) {
         console.log('Looking for settings.ini in the following places:')
         console.log(iniRoot)
     }
 
-    for (let i = 0; i < iniRoot.length; i++) {
-        const currentIniPath = path.join(iniRoot[i], '/settings.ini')
-        if (fs.existsSync(currentIniPath)) {
-            return currentIniPath
+    for (var key in iniRoot) {
+        if (iniRoot.hasOwnProperty(key)) {
+            const currentIniPath = path.join(iniRoot[key], '/settings.ini')
+            if (fs.existsSync(currentIniPath)) {
+                return currentIniPath
+            }
         }
     }
 
@@ -655,15 +649,15 @@ function iniFullPath() {
         if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
             fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
         }
-        return path.join(appdata, 'kimai2-cmd', 'settings.ini')
+        return path.join(iniRoot.wininstaller, 'settings.ini')
     } else if (dirArr[0] == 'snapshot' || dirArr[1] == 'snapshot') {
-        if (program.verbose) {console.log('This is a pkg version')}
+        if (program.verbose) { console.log('This is a pkg version') }
         //for pkg version:
-        return path.join(path.dirname(process.execPath), 'settings.ini')
+        return path.join(iniRoot.pkg, 'settings.ini')
     } else {
-        if (program.verbose) {console.log('This is an npm version')}
+        if (program.verbose) { console.log('This is an npm version') }
         //For npm version:
-        return 'settings.ini'
+        return path.join(iniRoot.npm, 'settings.ini')
     }
 }
 
@@ -675,6 +669,20 @@ function iniFullPath() {
  */
 function sanitizeServerUrl(kimaiurl) {
     return kimaiurl.replace(/\/+$/, "");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                           Settings.ini locations                           */
+/* -------------------------------------------------------------------------- */
+
+//different settings.ini path for developement and pkg and windows installer version
+const iniRoot = {
+    pkg: path.dirname(process.execPath),//This is for pkg version
+    npm: __dirname//This is for npm version
+}
+
+if (appdata) {
+    iniRoot.wininstaller = path.join(appdata, '/kimai2-cmd')
 }
 
 /* -------------------------------------------------------------------------- */
