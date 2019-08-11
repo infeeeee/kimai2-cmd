@@ -1,7 +1,7 @@
 [serversettings]
 kimaiurl=https://demo.kimai.org
 username=anna_admin
-password=apipassword
+password=api_kitten
 
 [argos_bitbar]
 kimaipath=/path/to/kimai2-cmd-macos
