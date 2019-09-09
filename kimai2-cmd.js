@@ -745,8 +745,8 @@ function updateRainmeter(settings) {
             let rainmeterDataIni = ini.stringify(rainmeterData).replaceAll('\\\\#', '#').replaceAll('"\\[', '[').replaceAll('\]"', ']').replaceAll('\\\\"', '"')
 
             // write rainmeter files
-            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars))
-            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni)
+            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), {encoding: 'utf16le'})
+            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, {encoding: 'utf16le'})
             if (program.verbose) {
                 console.log("Rainmeter files:")
                 console.log(rainmeterVarPath, rainmeterDataPath)
