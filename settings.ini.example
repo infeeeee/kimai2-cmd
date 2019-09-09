@@ -6,3 +6,7 @@ password=api_kitten
 [argos_bitbar]
 kimaipath=/path/to/kimai2-cmd-macos
 buttonlength=10
+
+[rainmeter]
+skindir=C:\Users\username\Documents\Rainmeter\Skins\kimai2-cmd-rainmeter\kimai2
+meterstyle=styleProjects

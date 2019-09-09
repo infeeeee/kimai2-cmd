@@ -6,9 +6,7 @@ Command line client for [Kimai2](https://www.kimai.org/), the open source, self-
 
 To use this program you have to install Kimai2 first!
 
-This client is still under development. See planned features in the next section
-
-## Current and planned features
+## Features
 
 This client is not intended to replace the Kimai webUI, so only basic functions, starting and stopping measurements
 
@@ -23,8 +21,8 @@ UI:
 
 Integration:
 - [x] Portable executable for all three platforms
-- [x] Installer for windows
-- [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
+- [x] Installer for Windows
+- [x] Generate output for Rainmeter (Windows). More info here: [kimai2-cmd-rainmeter](https://github.com/infeeeee/kimai2-cmd-rainmeter)
 - [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
 Requests for integrations with other softwares are welcomed! Just open an issue and show an example output, what you need.
@@ -105,6 +103,7 @@ Commands:
   start [project] [activity]  start selected project and activity
   restart [id]                restart selected measurement
   stop [id]                   stop all or selected measurement measurements, [id] is optional
+  rainmeter                   update rainmeter skin
   list-active                 list active measurements
   list-recent                 list recent measurements
   list-projects               list all projects
@@ -205,7 +204,7 @@ On the first run it will ask for your settings, but you can just copy settings.i
 
 ## Troubleshooting
 
-If you find a bug open an issue! The client is not finished yet, however all implemented features should work!
+If you find a bug open an issue here! 
 
 ## License
 

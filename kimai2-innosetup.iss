@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{A10BF7B2-6641-4B06-9C68-268B649FCE57}
 AppName=kimai2-cmd
-AppVersion=0.2.4
+AppVersion=0.3.0
 AppPublisher=infeeeee
 AppPublisherURL=https://github.com/infeeeee/kimai2-cmd
 AppSupportURL=https://github.com/infeeeee/kimai2-cmd
@@ -45,6 +45,8 @@ Filename: "{app}\kimai2-cmd.exe"; Description: "{cm:LaunchProgram,kimai2-cmd}"; 
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "kimaiurl"; String: "{code:GetKimaiUrl}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "username"; String: "{code:GetUserName}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "password"; String: "{code:GetPassword}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "skindir"; String: "{code:GetRainmeterPath}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "meterstyle"; String: "styleProjects"; Tasks: createini
 
 [Registry]
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
@@ -62,6 +64,9 @@ AuthPage := CreateInputQueryPage(wpSelectTasks,
   AuthPage.Add('Kimai2 url:', False);
   AuthPage.Add('Username:', False);
   AuthPage.Add('API password:', False);
+  AuthPage.Add('Skin folder', False);
+  AuthPage.Values[3] := ExpandConstant('{userdocs}') + '\Rainmeter\Skins\kimai2-cmd-rainmeter\kimai2';
+
 end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
@@ -92,6 +97,11 @@ end;
 function GetPassword(Param: String): string;
 begin
 result := AuthPage.Values[2];
+end;
+
+function GetRainmeterPath(Param: String): string;
+begin
+result := AuthPage.Values[3];
 end;
 
 function NeedsAddPath(Param: string): boolean;
