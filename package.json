@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node kimai2-cmd.js",
     "build-nix": "pkg --out-path builds package.json",
-    "build-current": "pkg --targets node10 --out-path builds kimai2-cmd.js"
+    "build-current": "pkg --targets node10 --out-path builds kimai2-cmd.js", 
+    "copy-exe-to-rainmeter": "copy .\\builds\\kimai2-cmd.exe %userprofile%\\Documents\\Rainmeter\\Skins\\kimai2-cmd-rainmeter\\@Resources\\kimai2-cmd\\"
   },
   "keywords": [
     "kimai2",

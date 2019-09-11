@@ -718,6 +718,9 @@ function updateRainmeter(settings) {
             rainmeterVars.Variables.serverUrl = settings.serversettings.kimaiurl
             rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' | ' + res[1][0].activity.name : "No active recording"
 
+            //Add first id as default
+            rainmeterVars.Variables.measurementid = rainmeterRaw.recent[0].id
+
             if (res[1].length) {
                 rainmeterVars.Variables.startHidden = 1
                 rainmeterVars.Variables.stopHidden = 0
@@ -733,7 +736,7 @@ function updateRainmeter(settings) {
                 currMeter.DynamicVariables = '1'
                 currMeter.Hidden = "#MenuVis#"
                 currMeter.Text = rainmeterRaw.recent[i].project.name + ' | ' + rainmeterRaw.recent[i].activity.name
-                currMeter.leftmouseupaction = ini.unsafe('[!SetVariable measurementid "' + rainmeterRaw.recent[i].id + '"][!Delay 1000][!CommandMeasure MeasureStart "Run"]')
+                currMeter.leftmouseupaction = ini.unsafe('[!SetVariable measurementid "' + rainmeterRaw.recent[i].id + '"][!UpdateMeasure MeasureStart][!CommandMeasure MeasureStart "Run"]')
 
                 rainmeterData["MeterRecent" + i] = currMeter
             }
@@ -745,8 +748,8 @@ function updateRainmeter(settings) {
             let rainmeterDataIni = ini.stringify(rainmeterData).replaceAll('\\\\#', '#').replaceAll('"\\[', '[').replaceAll('\]"', ']').replaceAll('\\\\"', '"')
 
             // write rainmeter files
-            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), {encoding: 'utf16le'})
-            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, {encoding: 'utf16le'})
+            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), { encoding: 'utf16le' })
+            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, { encoding: 'utf16le' })
             if (program.verbose) {
                 console.log("Rainmeter files:")
                 console.log(rainmeterVarPath, rainmeterDataPath)
