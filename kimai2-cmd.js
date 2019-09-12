@@ -446,22 +446,27 @@ function printList(settings, arr, endpoint) {
  * 
  * @param {moment} begin beginning moment
  * @param {moment} end optional, end moment
+ * @param {boolean} returnArray optional, returns array if true, returns formatted text if false
  */
-function formattedDuration(begin, end) {
+function formattedDuration(begin, end, returnArray = false) {
     let momentDuration = moment.duration(moment(end).diff(moment(begin)))
 
-    let hrs = momentDuration.hours()
-    let mins = momentDuration.minutes()
+    let hrs = momentDuration.hours().toString()
+    let mins = momentDuration.minutes().toString()
 
-    if (hrs.toString().length == 1) {
+    if (hrs.length == 1) {
         hrs = "0" + hrs
     }
 
-    if (mins.toString().length == 1) {
+    if (mins.length == 1) {
         mins = "0" + mins
     }
 
-    return hrs + ':' + mins
+    if (returnArray) {
+        return [hrs, mins]
+    } else {
+        return hrs + ':' + mins
+    }
 }
 
 
@@ -715,8 +720,11 @@ function updateRainmeter(settings) {
             return kimaiList(settings, 'timesheets/active', false)
         })
         .then(res => {
+            // active measurement. Rainmeter only supports one active measurement.
             rainmeterVars.Variables.serverUrl = settings.serversettings.kimaiurl
             rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' | ' + res[1][0].activity.name : "No active recording"
+            rainmeterVars.Variables.activeHrs = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[0] : ""
+            rainmeterVars.Variables.activeMins = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[1] : ""
 
             //Add first id as default
             rainmeterVars.Variables.measurementid = rainmeterRaw.recent[0].id
@@ -729,6 +737,7 @@ function updateRainmeter(settings) {
                 rainmeterVars.Variables.stopHidden = 1
             }
 
+            //recent measurements
             for (let i = 0; i < rainmeterRaw.recent.length; i++) {
                 let currMeter = {}
                 currMeter.Meter = 'String'
