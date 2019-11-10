@@ -744,7 +744,7 @@ function updateRainmeter(settings) {
                 currMeter.MeterStyle = settings.rainmeter.meterstyle
                 currMeter.DynamicVariables = '1'
                 currMeter.Hidden = "#MenuVis#"
-                currMeter.Text = rainmeterRaw.recent[i].project.name + ' | ' + rainmeterRaw.recent[i].activity.name
+                currMeter.Text = rainmeterRaw.recent[i].project.name + ' - ' + rainmeterRaw.recent[i].activity.name
                 currMeter.leftmouseupaction = ini.unsafe('[!SetVariable measurementid "' + rainmeterRaw.recent[i].id + '"][!UpdateMeasure MeasureStart][!CommandMeasure MeasureStart "Run"]')
 
                 rainmeterData["MeterRecent" + i] = currMeter
