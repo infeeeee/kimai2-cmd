@@ -6,26 +6,24 @@ Command line client for [Kimai2](https://www.kimai.org/), the open source, self-
 
 To use this program you have to install Kimai2 first!
 
-This client is still under development. See planned features in the next section
-
-## Current and planned features
+## Features
 
 This client is not intended to replace the Kimai webUI, so only basic functions, starting and stopping measurements
 
 Commands: 
-- [x] Start, restart and stop measurements
-- [x] List active and recent measurements
-- [x] List projects and activities
+- Start, restart and stop measurements
+- List active and recent measurements
+- List projects and activities
 
 UI:
-- [x] Interactive terminal UI with autocomplete
-- [x] Classic terminal UI for integration 
+- Interactive terminal UI with autocomplete
+- Classic terminal UI for integration 
 
 Integration:
-- [x] Portable executable for all three platforms
-- [x] Installer for windows
-- [ ] Generate output for Rainmeter (Windows) (Just like [kimai-cmd](https://github.com/infeeeee/kimai-cmd))
-- [x] Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
+- Portable executable for all three platforms
+- Installer for Windows
+- Generate output for Rainmeter (Windows). More info here: [kimai2-cmd-rainmeter](https://github.com/infeeeee/kimai2-cmd-rainmeter)
+- Generate output for Argos/Kargos/Bitbar (Gnome, Kde, Mac). More info here: [kimai2-cmd-argos](https://github.com/infeeeee/kimai2-cmd-argos)
 
 Requests for integrations with other softwares are welcomed! Just open an issue and show an example output, what you need.
 
@@ -33,7 +31,7 @@ Requests for integrations with other softwares are welcomed! Just open an issue 
 
 Download from [releases](https://github.com/infeeeee/kimai2-cmd/releases/latest). 
 
-You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> User profile -> API.
+You have to create an API password for your username on your Kimai installation. In Kimai: User menu (Top right corner) -> Edit -> API.
 
 ### Notes on Windows
 
@@ -105,6 +103,7 @@ Commands:
   start [project] [activity]  start selected project and activity
   restart [id]                restart selected measurement
   stop [id]                   stop all or selected measurement measurements, [id] is optional
+  rainmeter                   update rainmeter skin
   list-active                 list active measurements
   list-recent                 list recent measurements
   list-projects               list all projects
@@ -180,32 +179,19 @@ For interactive mode just simply:
 ```
 npm start
 ```
-or
-```
-node kimai2-cmd.js
-```
 
-For usage with options you have pass a `--` before the options if you start with `npm start`. You don't need this if you don't use options just commands
-
-So this two lines are equivalent, both shows the current version of kimai2-cmd:
+For usage with options you have pass a `--` before the options. You don't need this if you don't use options just commands:
 
 ```
 npm start -- -V
-node kimai2-cmd.js -V
-```
-
-This two are equivalent as well, both starts the project `foo` with the activity `bar`
-
-```
 npm start start foo bar
-node kimai2-cmd.js start foo bar
 ```
 
 On the first run it will ask for your settings, but you can just copy settings.ini.example to settings.ini and modify it with your favorite text editor
 
 ## Troubleshooting
 
-If you find a bug open an issue! The client is not finished yet, however all implemented features should work!
+If you find a bug open an issue here! 
 
 ## License
 

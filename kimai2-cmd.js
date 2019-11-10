@@ -9,6 +9,7 @@ const fs = require('fs');
 
 const platform = process.platform
 const appdata = process.env.appdata
+const userprofile = process.env.userprofile
 
 //request
 const request = require('request');
@@ -445,22 +446,27 @@ function printList(settings, arr, endpoint) {
  * 
  * @param {moment} begin beginning moment
  * @param {moment} end optional, end moment
+ * @param {boolean} returnArray optional, returns array if true, returns formatted text if false
  */
-function formattedDuration(begin, end) {
+function formattedDuration(begin, end, returnArray = false) {
     let momentDuration = moment.duration(moment(end).diff(moment(begin)))
 
-    let hrs = momentDuration.hours()
-    let mins = momentDuration.minutes()
+    let hrs = momentDuration.hours().toString()
+    let mins = momentDuration.minutes().toString()
 
-    if (hrs.toString().length == 1) {
+    if (hrs.length == 1) {
         hrs = "0" + hrs
     }
 
-    if (mins.toString().length == 1) {
+    if (mins.length == 1) {
         mins = "0" + mins
     }
 
-    return hrs + ':' + mins
+    if (returnArray) {
+        return [hrs, mins]
+    } else {
+        return hrs + ':' + mins
+    }
 }
 
 
@@ -616,6 +622,8 @@ function uiAskForSettings() {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
+
+                //argos/bitbar settings
                 settings.argos_bitbar = {}
 
                 if (platform == "darwin") {
@@ -624,6 +632,16 @@ function uiAskForSettings() {
                     settings.argos_bitbar.kimaipath = "kimai"
                 }
                 settings.argos_bitbar.buttonlength = 10
+
+                // rainmeter settings
+                settings.rainmeter = {}
+
+                if (userprofile) {
+                    settings.rainmeter.skindir = path.join(userprofile, "Documents\\Rainmeter\\Skins\\kimai2-cmd-rainmeter\\kimai2")
+                } else {
+                    settings.rainmeter.skindir = ""
+                }
+                settings.rainmeter.meterstyle = "styleProjects"
 
                 const thePath = iniFullPath()
                 if (program.verbose) { console.log('Trying to save settings to: ' + thePath) }
@@ -671,6 +689,86 @@ function sanitizeServerUrl(kimaiurl) {
     return kimaiurl.replace(/\/+$/, "");
 }
 
+/**
+ * Replace all occurenies of chars in string
+ * 
+ * @param {string} search regex to search for
+ * @param {string} replacement replacement string
+ * 
+ */
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};
+
+/* -------------------------------- Rainmeter ------------------------------- */
+
+const rainmeterVars = {}
+rainmeterVars.Variables = {}
+const rainmeterRaw = {}
+const rainmeterData = {}
+
+/**
+ * Updates rainmeter files
+ * 
+ * @return {object} settings: all settings read from the settings file
+ */
+function updateRainmeter(settings) {
+    kimaiList(settings, 'timesheets/recent', false)
+        .then(res => {
+            rainmeterRaw.recent = res[1]
+            return kimaiList(settings, 'timesheets/active', false)
+        })
+        .then(res => {
+            // active measurement. Rainmeter only supports one active measurement.
+            rainmeterVars.Variables.serverUrl = settings.serversettings.kimaiurl
+            rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' | ' + res[1][0].activity.name : "No active recording"
+            rainmeterVars.Variables.activeHrs = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[0] : ""
+            rainmeterVars.Variables.activeMins = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[1] : ""
+
+            //Add first id as default
+            rainmeterVars.Variables.measurementid = rainmeterRaw.recent[0].id
+
+            if (res[1].length) {
+                rainmeterVars.Variables.startHidden = 1
+                rainmeterVars.Variables.stopHidden = 0
+            } else {
+                rainmeterVars.Variables.startHidden = 0
+                rainmeterVars.Variables.stopHidden = 1
+            }
+
+            //recent measurements
+            for (let i = 0; i < rainmeterRaw.recent.length; i++) {
+                let currMeter = {}
+                currMeter.Meter = 'String'
+                currMeter.MeterStyle = settings.rainmeter.meterstyle
+                currMeter.DynamicVariables = '1'
+                currMeter.Hidden = "#MenuVis#"
+                currMeter.Text = rainmeterRaw.recent[i].project.name + ' - ' + rainmeterRaw.recent[i].activity.name
+                currMeter.leftmouseupaction = ini.unsafe('[!SetVariable measurementid "' + rainmeterRaw.recent[i].id + '"][!UpdateMeasure MeasureStart][!CommandMeasure MeasureStart "Run"]')
+
+                rainmeterData["MeterRecent" + i] = currMeter
+            }
+
+            let rainmeterVarPath = path.join(settings.rainmeter.skindir, 'kimaiVars.inc')
+            let rainmeterDataPath = path.join(settings.rainmeter.skindir, 'kimaiData.inc')
+
+            // stringify wraps spec character, rainmeter doesn't like that
+            let rainmeterDataIni = ini.stringify(rainmeterData).replaceAll('\\\\#', '#').replaceAll('"\\[', '[').replaceAll('\]"', ']').replaceAll('\\\\"', '"')
+
+            // write rainmeter files
+            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), { encoding: 'utf16le' })
+            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, { encoding: 'utf16le' })
+            if (program.verbose) {
+                console.log("Rainmeter files:")
+                console.log(rainmeterVarPath, rainmeterDataPath)
+                console.log("rainmeter data:")
+                console.log(rainmeterVars)
+                console.log(rainmeterDataIni)
+            }
+        })
+}
+
 /* -------------------------------------------------------------------------- */
 /*                           Settings.ini locations                           */
 /* -------------------------------------------------------------------------- */
@@ -694,7 +792,6 @@ program
     .description(pjson.description + '. For interactive mode start without any commands. To generate settings file start in interactive mode!')
     .option('-v, --verbose', 'verbose, longer logging', false)
     .option('-i, --id', 'show id of elements when listing', false)
-    // .option('-r, --rainmeter', 'generate rainmeter files')
     .option('-b, --argosbutton', 'argos/bitbar button output')
     .option('-a, --argos', 'argos/bitbar output')
 
@@ -731,6 +828,15 @@ program.command('stop [id]')
         checkSettings()
             .then(settings => {
                 kimaiStop(settings, measurementId)
+            })
+    })
+
+program.command('rainmeter')
+    .description('update rainmeter skin')
+    .action(function () {
+        checkSettings()
+            .then(settings => {
+                updateRainmeter(settings)
             })
     })
 
