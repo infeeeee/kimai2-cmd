@@ -722,9 +722,10 @@ function updateRainmeter(settings) {
         .then(res => {
             // active measurement. Rainmeter only supports one active measurement.
             rainmeterVars.Variables.serverUrl = settings.serversettings.kimaiurl
-            rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' | ' + res[1][0].activity.name : "No active recording"
+            rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' - ' + res[1][0].activity.name : "No active recording"
             rainmeterVars.Variables.activeHrs = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[0] : ""
             rainmeterVars.Variables.activeMins = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[1] : ""
+            rainmeterVars.Variables.activeRunning = (res[1].length) ? "1" : "0"
 
             //Add first id as default
             rainmeterVars.Variables.measurementid = rainmeterRaw.recent[0].id
