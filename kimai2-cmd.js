@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 /* -------------------------------------------------------------------------- */
 /*                                   Modules                                  */
 /* -------------------------------------------------------------------------- */
@@ -106,28 +107,51 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
 function uiMainMenu(settings) {
     console.log()
     inquirer
-        .prompt([
-            {
-                type: 'list',
-                name: 'mainmenu',
-                message: 'Select command',
-                pageSize: process.stdout.rows - 1,
-                choices:
-                    [
-                        { name: 'Restart recent measurement', value: 'restart' },
-                        { name: 'Start new measurement', value: 'start' },
-                        { name: 'Stop all active measurements', value: 'stop-all' },
-                        { name: 'Stop an active measurement', value: 'stop' },
-                        new inquirer.Separator(),
-                        { name: 'List active measurements', value: 'list-active' },
-                        { name: 'List recent measurements', value: 'list-recent' },
-                        { name: 'List projects', value: 'list-projects' },
-                        { name: 'List activities', value: 'list-activities' },
-                        new inquirer.Separator(),
-                        { name: 'Exit', value: 'exit' }
-                    ]
-            }
-        ])
+        .prompt([{
+            type: 'list',
+            name: 'mainmenu',
+            message: 'Select command',
+            pageSize: process.stdout.rows - 1,
+            choices: [{
+                    name: 'Restart recent measurement',
+                    value: 'restart'
+                },
+                {
+                    name: 'Start new measurement',
+                    value: 'start'
+                },
+                {
+                    name: 'Stop all active measurements',
+                    value: 'stop-all'
+                },
+                {
+                    name: 'Stop an active measurement',
+                    value: 'stop'
+                },
+                new inquirer.Separator(),
+                {
+                    name: 'List active measurements',
+                    value: 'list-active'
+                },
+                {
+                    name: 'List recent measurements',
+                    value: 'list-recent'
+                },
+                {
+                    name: 'List projects',
+                    value: 'list-projects'
+                },
+                {
+                    name: 'List activities',
+                    value: 'list-activities'
+                },
+                new inquirer.Separator(),
+                {
+                    name: 'Exit',
+                    value: 'exit'
+                }
+            ]
+        }])
         .then(answers => {
             if (program.verbose) {
                 console.log('selected answer: ' + answers.mainmenu)
@@ -153,8 +177,11 @@ function uiMainMenu(settings) {
                 case 'stop':
                     kimaiList(settings, 'timesheets/active', false)
                         .then(res => {
-                            return uiSelectMeasurement(res[1])
-                        }).then(stopId => {
+                            if (res[1].length > 0) {
+                                return uiSelectMeasurement(res[1])
+                            }
+                        })
+                        .then(stopId => {
                             return kimaiStop(settings, stopId)
                         })
                         .then(res => uiMainMenu(res[0]))
@@ -208,13 +235,15 @@ function uiKimaiStart(settings) {
         const selected = {}
         kimaiList(settings, 'projects', false)
             .then(res => {
-                // console.log(res[1])
                 return uiAutocompleteSelect(res[1], 'Select project')
             })
             .then(res => {
-                // console.log(res)
                 selected.projectId = res.id
-                return kimaiList(settings, 'activities', false, { filter: { project: res.id } })
+                return kimaiList(settings, 'activities', false, {
+                    filter: {
+                        project: res.id
+                    }
+                })
             })
             .then(res => {
                 return uiAutocompleteSelect(res[1], 'Select activity')
@@ -248,7 +277,9 @@ function kimaiStart(settings, project, activity) {
             console.log("kimaistart calling api:", body)
         }
 
-        callKimaiApi('POST', 'timesheets', settings.serversettings, { reqbody: body })
+        callKimaiApi('POST', 'timesheets', settings.serversettings, {
+                reqbody: body
+            })
             .then(res => {
                 console.log('Started: ' + res.id)
                 resolve()
@@ -296,9 +327,13 @@ function kimaiStop(settings, id = false) {
         } else {
             kimaiList(settings, 'timesheets/active', false)
                 .then(res => {
-                    const jsonList = res[1]
-                    return callKimaiStop(settings, jsonList)
-                    //callKimaiStop(settings, jsonList)
+                    if (res[1].length > 0) {
+                        const jsonList = res[1]
+                        return callKimaiStop(settings, jsonList)
+                    } else {
+                        console.log('No active measurements')
+                        resolve([settings])
+                    }
                 })
                 .then(_ => {
                     resolve()
@@ -343,7 +378,9 @@ function callKimaiStop(settings, jsonList, i = 0) {
 function kimaiList(settings, endpoint, print = false, options = false) {
     const filter = options.filter || false
     return new Promise((resolve, reject) => {
-        callKimaiApi('GET', endpoint, settings.serversettings, { qs: filter })
+        callKimaiApi('GET', endpoint, settings.serversettings, {
+                qs: filter
+            })
             .then(jsonList => {
                 if (print) {
                     printList(settings, jsonList, endpoint)
@@ -477,22 +514,24 @@ function formattedDuration(begin, end, returnArray = false) {
 function uiSelectMeasurement(thelist) {
     return new Promise((resolve, reject) => {
         const choices = []
+        if (thelist.length == 0) {
+            reject()
+        }
         for (let i = 0; i < thelist.length; i++) {
             const element = thelist[i];
             choices.push({
-                name: element.project.name + " | " + element.activity.name, value: element.id
+                name: element.project.name + " | " + element.activity.name,
+                value: element.id
             })
         }
         inquirer
-            .prompt([
-                {
-                    type: 'list',
-                    name: 'selectMeasurement',
-                    message: 'Select measurement',
-                    pageSize: process.stdout.rows - 1,
-                    choices: choices
-                }
-            ]).then(answers => {
+            .prompt([{
+                type: 'list',
+                name: 'selectMeasurement',
+                message: 'Select measurement',
+                pageSize: process.stdout.rows - 1,
+                choices: choices
+            }]).then(answers => {
                 resolve(answers.selectMeasurement)
             })
     })
@@ -511,31 +550,30 @@ function uiAutocompleteSelect(thelist, message) {
         for (let i = 0; i < thelist.length; i++) {
             const element = thelist[i];
             choices.push({
-                name: element.name, id: element.id
+                name: element.name,
+                id: element.id
             })
             names.push(element.name)
         }
         inquirer.registerPrompt('autocomplete', require('inquirer-autocomplete-prompt'));
         inquirer
-            .prompt([
-                {
-                    type: 'autocomplete',
-                    name: 'autoSelect',
-                    message: message,
-                    pageSize: process.stdout.rows - 2,
-                    source: function (answers, input) {
-                        input = input || '';
-                        return new Promise((resolve, reject) => {
-                            var fuzzyResult = fuzzy.filter(input, names);
-                            resolve(
-                                fuzzyResult.map(function (el) {
-                                    return el.original;
-                                })
-                            )
-                        })
-                    }
+            .prompt([{
+                type: 'autocomplete',
+                name: 'autoSelect',
+                message: message,
+                pageSize: process.stdout.rows - 2,
+                source: function (answers, input) {
+                    input = input || '';
+                    return new Promise((resolve, reject) => {
+                        var fuzzyResult = fuzzy.filter(input, names);
+                        resolve(
+                            fuzzyResult.map(function (el) {
+                                return el.original;
+                            })
+                        )
+                    })
                 }
-            ]).then(answers => {
+            }]).then(answers => {
                 let ind = names.indexOf(answers.autoSelect)
                 let selectedChoice = choices[ind]
                 // console.log(selectedChoice)
@@ -599,8 +637,7 @@ function checkSettings() {
  */
 function uiAskForSettings() {
     return new Promise((resolve, reject) => {
-        let questions = [
-            {
+        let questions = [{
                 type: 'input',
                 name: 'kimaiurl',
                 message: "Kimai2 url:"
@@ -644,7 +681,9 @@ function uiAskForSettings() {
                 settings.rainmeter.meterstyle = "styleProjects"
 
                 const thePath = iniFullPath()
-                if (program.verbose) { console.log('Trying to save settings to: ' + thePath) }
+                if (program.verbose) {
+                    console.log('Trying to save settings to: ' + thePath)
+                }
 
                 fs.writeFileSync(thePath, ini.stringify(settings))
                 console.log('Settings saved to ' + iniPath())
@@ -663,17 +702,23 @@ function iniFullPath() {
 
     //Maybe I should replace this terrible 'if' with some registry value reading
     if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
-        if (program.verbose) { console.log('This is an installer based windows installation') }
+        if (program.verbose) {
+            console.log('This is an installer based windows installation')
+        }
         if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
             fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
         }
         return path.join(iniRoot.wininstaller, 'settings.ini')
     } else if (dirArr[0] == 'snapshot' || dirArr[1] == 'snapshot') {
-        if (program.verbose) { console.log('This is a pkg version') }
+        if (program.verbose) {
+            console.log('This is a pkg version')
+        }
         //for pkg version:
         return path.join(iniRoot.pkg, 'settings.ini')
     } else {
-        if (program.verbose) { console.log('This is an npm version') }
+        if (program.verbose) {
+            console.log('This is an npm version')
+        }
         //For npm version:
         return path.join(iniRoot.npm, 'settings.ini')
     }
@@ -722,9 +767,10 @@ function updateRainmeter(settings) {
         .then(res => {
             // active measurement. Rainmeter only supports one active measurement.
             rainmeterVars.Variables.serverUrl = settings.serversettings.kimaiurl
-            rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' | ' + res[1][0].activity.name : "No active recording"
+            rainmeterVars.Variables.activeRecording = (res[1].length) ? res[1][0].project.name + ' - ' + res[1][0].activity.name : "No active recording"
             rainmeterVars.Variables.activeHrs = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[0] : ""
             rainmeterVars.Variables.activeMins = (res[1].length) ? formattedDuration(res[1][0].begin, undefined, true)[1] : ""
+            rainmeterVars.Variables.activeRunning = (res[1].length) ? "1" : "0"
 
             //Add first id as default
             rainmeterVars.Variables.measurementid = rainmeterRaw.recent[0].id
@@ -757,8 +803,12 @@ function updateRainmeter(settings) {
             let rainmeterDataIni = ini.stringify(rainmeterData).replaceAll('\\\\#', '#').replaceAll('"\\[', '[').replaceAll('\]"', ']').replaceAll('\\\\"', '"')
 
             // write rainmeter files
-            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), { encoding: 'utf16le' })
-            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, { encoding: 'utf16le' })
+            fs.writeFileSync(rainmeterVarPath, ini.stringify(rainmeterVars), {
+                encoding: 'utf16le'
+            })
+            fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, {
+                encoding: 'utf16le'
+            })
             if (program.verbose) {
                 console.log("Rainmeter files:")
                 console.log(rainmeterVarPath, rainmeterDataPath)
@@ -775,8 +825,8 @@ function updateRainmeter(settings) {
 
 //different settings.ini path for developement and pkg and windows installer version
 const iniRoot = {
-    pkg: path.dirname(process.execPath),//This is for pkg version
-    npm: __dirname//This is for npm version
+    pkg: path.dirname(process.execPath), //This is for pkg version
+    npm: __dirname //This is for npm version
 }
 
 if (appdata) {

@@ -140,7 +140,7 @@ Prerequisites:
 ```
 git clone https://github.com/infeeeee/kimai2-cmd
 cd kimai2-cmd
-npm install
+npm i
 ```
 
 ### Build
@@ -148,7 +148,7 @@ npm install
 Prerequisite: globally installed [pkg](https://github.com/zeit/pkg): 
 
 ```
-npm install pkg -g
+npm i pkg -g
 ```
 
 Build for current platform and architecture
