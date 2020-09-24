@@ -127,6 +127,12 @@ You can create your settings.ini file manually, by downloading, renaming and edi
 
 On the windows installer version settings.ini location: `C:\Users\Username\AppData\Roaming\kimai2-cmd\settings.ini`
 
+You can also store the settings.ini file in custom location, just export the full path to the `KIMAI_CONFIG` variable, something like this:
+
+```bash
+export KIMAI_CONFIG=$XDG_CONFIG_HOME/kimai2/settings.ini
+```
+
 Integration settings are not asked during first run, you have to change them manually in settings.ini. If you don't use an integration, you can safely ignore it's settings.
 
 ## Development version

@@ -7,7 +7,7 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{A10BF7B2-6641-4B06-9C68-268B649FCE57}
 AppName=kimai2-cmd
-AppVersion=1.0.2
+AppVersion=1.1.0
 AppPublisher=infeeeee
 AppPublisherURL=https://github.com/infeeeee/kimai2-cmd
 AppSupportURL=https://github.com/infeeeee/kimai2-cmd
