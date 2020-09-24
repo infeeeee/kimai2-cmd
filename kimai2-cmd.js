@@ -50,9 +50,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
     const qs = options.qs || false
     const reqbody = options.reqbody || false
 
-    if (program.verbose) {
-        console.log("calling kimai:", httpMethod, kimaiMethod, serversettings)
-    }
+    debug("calling kimai:", httpMethod, kimaiMethod, serversettings)
 
     return new Promise((resolve, reject) => {
         const options = {
@@ -72,9 +70,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
             options.headers['Content-Type'] = 'application/json'
         }
 
-        if (program.verbose) {
-            console.log("request options:", options)
-        }
+        debug("request options:", options)
 
         request(options, (error, response, body) => {
             if (error) {
@@ -83,9 +79,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
 
             let jsonarr = JSON.parse(response.body)
 
-            if (program.verbose) {
-                console.log("Response body:", jsonarr)
-            }
+            debug("Response body:", jsonarr)
 
             if (jsonarr.message) {
                 console.log('Server error message:')
@@ -153,9 +147,9 @@ function uiMainMenu(settings) {
             ]
         }])
         .then(answers => {
-            if (program.verbose) {
-                console.log('selected answer: ' + answers.mainmenu)
-            }
+
+            debug('selected answer: ' + answers.mainmenu)
+
             switch (answers.mainmenu) {
                 case 'restart':
                     kimaiList(settings, 'timesheets/recent', false)
@@ -273,9 +267,8 @@ function kimaiStart(settings, project, activity) {
             project: project,
             activity: activity
         }
-        if (program.verbose) {
-            console.log("kimaistart calling api:", body)
-        }
+
+        debug("kimaistart calling api:", body)
 
         callKimaiApi('POST', 'timesheets', settings.serversettings, {
                 reqbody: body
@@ -402,16 +395,15 @@ function kimaiList(settings, endpoint, print = false, options = false) {
  * @param {string} endpoint for selecting display layout
  */
 function printList(settings, arr, endpoint) {
-    if (program.verbose) {
-        console.log()
-        if (arr.length > 1) {
-            console.log(arr.length + ' results:')
-        } else if (arr.length == 0) {
-            console.log('No results')
-        } else {
-            console.log('One result:')
-        }
+
+    if (arr.length > 1) {
+        debug(arr.length + ' results:')
+    } else if (arr.length == 0) {
+        debug('No results')
+    } else {
+        debug('One result:')
     }
+
     //no result for scripts:
     if (arr.length == 0) {
         if (program.argos) {
@@ -590,10 +582,22 @@ function uiAutocompleteSelect(thelist, message) {
  * @returns false: If no settings found
  */
 function iniPath() {
-    if (program.verbose) {
-        console.log('Looking for settings.ini in the following places:')
-        console.log(iniRoot)
+
+    // Check path in environment variable
+    if (process.env.KIMAI_CONFIG) {
+        const envIniPath = process.env.KIMAI_CONFIG
+        debug('Found in KIMAI_CONFIG envvar: ' + envIniPath)
+        if (fs.existsSync(envIniPath)) {
+            return envIniPath
+        } else {
+            debug('KIMAI_CONFIG variable malformed')
+        }
+    } else {
+        debug('No environment variable found')
     }
+
+    debug('Looking for settings.ini in the following places:')
+    debug(iniRoot)
 
     for (var key in iniRoot) {
         if (iniRoot.hasOwnProperty(key)) {
@@ -615,9 +619,13 @@ function iniPath() {
  */
 function checkSettings() {
     return new Promise((resolve, reject) => {
+
+        
+        
+
         const settingsPath = iniPath()
         if (settingsPath) {
-            if (program.verbose) console.log("settings.ini found at: ", settingsPath)
+            debug("settings.ini found at: " + settingsPath)
             let settings = ini.parse(fs.readFileSync(settingsPath, 'utf-8'))
             resolve(settings)
         } else {
@@ -629,6 +637,14 @@ function checkSettings() {
 
         }
     })
+}
+
+/**
+ * Prints to console if verbose
+ * @param {string} msg 
+ */
+function debug(msg) {
+    if (program.verbose) console.log(msg)
 }
 
 /**
@@ -681,9 +697,7 @@ function uiAskForSettings() {
                 settings.rainmeter.meterstyle = "styleProjects"
 
                 const thePath = iniFullPath()
-                if (program.verbose) {
-                    console.log('Trying to save settings to: ' + thePath)
-                }
+                debug('Trying to save settings to: ' + thePath)
 
                 fs.writeFileSync(thePath, ini.stringify(settings))
                 console.log('Settings saved to ' + iniPath())
@@ -702,23 +716,20 @@ function iniFullPath() {
 
     //Maybe I should replace this terrible 'if' with some registry value reading
     if (platform == 'win32' && installDir[installDir.length - 2] == "Program Files" && installDir[installDir.length - 1] == "kimai2-cmd") {
-        if (program.verbose) {
-            console.log('This is an installer based windows installation')
-        }
+        debug('This is an installer based windows installation')
+
         if (!fs.existsSync(path.join(appdata, 'kimai2-cmd'))) {
             fs.mkdirSync(path.join(appdata, 'kimai2-cmd'))
         }
         return path.join(iniRoot.wininstaller, 'settings.ini')
     } else if (dirArr[0] == 'snapshot' || dirArr[1] == 'snapshot') {
-        if (program.verbose) {
-            console.log('This is a pkg version')
-        }
+        debug('This is a pkg version')
+
         //for pkg version:
         return path.join(iniRoot.pkg, 'settings.ini')
     } else {
-        if (program.verbose) {
-            console.log('This is an npm version')
-        }
+        debug('This is an npm version')
+
         //For npm version:
         return path.join(iniRoot.npm, 'settings.ini')
     }
@@ -809,13 +820,13 @@ function updateRainmeter(settings) {
             fs.writeFileSync(rainmeterDataPath, rainmeterDataIni, {
                 encoding: 'utf16le'
             })
-            if (program.verbose) {
-                console.log("Rainmeter files:")
-                console.log(rainmeterVarPath, rainmeterDataPath)
-                console.log("rainmeter data:")
-                console.log(rainmeterVars)
-                console.log(rainmeterDataIni)
-            }
+
+            debug("Rainmeter files:")
+            debug(rainmeterVarPath, rainmeterDataPath)
+            debug("rainmeter data:")
+            debug(rainmeterVars)
+            debug(rainmeterDataIni)
+
         })
 }
 
