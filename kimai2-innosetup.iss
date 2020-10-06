@@ -12,7 +12,7 @@ AppPublisher=infeeeee
 AppPublisherURL=https://github.com/infeeeee/kimai2-cmd
 AppSupportURL=https://github.com/infeeeee/kimai2-cmd
 AppUpdatesURL=https://github.com/infeeeee/kimai2-cmd
-DefaultDirName={pf}\kimai2-cmd
+DefaultDirName={commonpf}\kimai2-cmd
 DefaultGroupName=kimai2-cmd
 AllowNoIcons=yes
 LicenseFile={#SourcePath}\LICENSE
@@ -45,6 +45,7 @@ Filename: "{app}\kimai2-cmd.exe"; Description: "{cm:LaunchProgram,kimai2-cmd}"; 
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "kimaiurl"; String: "{code:GetKimaiUrl}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "username"; String: "{code:GetUserName}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "password"; String: "{code:GetPassword}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "servertime"; String: "false"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "skindir"; String: "{code:GetRainmeterPath}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "meterstyle"; String: "styleProjects"; Tasks: createini
 
