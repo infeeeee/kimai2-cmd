@@ -28,6 +28,9 @@ const moment = require('moment');
 
 //reading version number from package.json
 var pjson = require('./package.json');
+const {
+    config
+} = require('process');
 
 /* -------------------------------------------------------------------------- */
 /*                                  Functions                                 */
@@ -50,7 +53,8 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
     const qs = options.qs || false
     const reqbody = options.reqbody || false
 
-    debug("calling kimai:", httpMethod, kimaiMethod, serversettings)
+    debug("---")
+    debug("calling kimai: " + " " + httpMethod + " " + kimaiMethod + " " + serversettings)
 
     return new Promise((resolve, reject) => {
         const options = {
@@ -70,7 +74,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
             options.headers['Content-Type'] = 'application/json'
         }
 
-        debug("request options:", options)
+        debug("request options: " + options)
 
         request(options, (error, response, body) => {
             if (error) {
@@ -79,7 +83,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
 
             let jsonarr = JSON.parse(response.body)
 
-            debug("Response body:", jsonarr)
+            debug("Response body: " + jsonarr)
 
             if (jsonarr.message) {
                 console.log('Server error message:')
@@ -219,6 +223,22 @@ function kimaiRestart(settings, id) {
     })
 }
 
+
+function kimaiServerTime(settings) {
+    if (settings.serversettings.servertime) {
+        callKimaiApi('GET', 'config/i18n', settings.serversettings)
+            .then(res => {
+                debug("servertime: " + res)
+                return res
+            })
+    } else {
+        return moment().format()
+    }
+
+
+
+}
+
 /**
  * Interactive ui: select a project and activity and starts it
  * 
@@ -263,12 +283,22 @@ function kimaiStart(settings, project, activity) {
     return new Promise((resolve, reject) => {
 
         let body = {
-            begin: moment().format(),
+            // begin: moment().format(),
             project: project,
             activity: activity
         }
 
-        debug("kimaistart calling api:", body)
+        body.begin = kimaiServerTime(settings)
+        // if (settings.serversettings.servertime) {
+        //     kimaiServerTime(settings)
+        //         .then(res => {
+        //             debug('local time: ' + body.begin)
+        //             debug('server time: ' + res.now)
+        //             body.begin = res.now
+        //         })
+        // }
+
+        debug("kimaistart calling api: " + body)
 
         callKimaiApi('POST', 'timesheets', settings.serversettings, {
                 reqbody: body
@@ -620,9 +650,6 @@ function iniPath() {
 function checkSettings() {
     return new Promise((resolve, reject) => {
 
-        
-        
-
         const settingsPath = iniPath()
         if (settingsPath) {
             debug("settings.ini found at: " + settingsPath)
@@ -675,6 +702,9 @@ function uiAskForSettings() {
             .then(answers => {
                 let settings = {}
                 settings.serversettings = answers
+
+                //defaults servertime to false
+                settings.serversettings.servertime = false
 
                 //argos/bitbar settings
                 settings.argos_bitbar = {}
