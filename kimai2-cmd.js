@@ -223,20 +223,24 @@ function kimaiRestart(settings, id) {
     })
 }
 
-
+/**
+ * Returns the date according to settings
+ * 
+ * @param {object} settings All settings read from ini
+ * @returns {string} The date according to settings
+ */
 function kimaiServerTime(settings) {
     if (settings.serversettings.servertime) {
         callKimaiApi('GET', 'config/i18n', settings.serversettings)
             .then(res => {
-                debug("servertime: " + res)
-                return res
+                debug("servertime: " + res.now)
+                debug("localtime: " + moment().format())
+                return res.now
             })
     } else {
+        debug("localtime: " + moment().format())
         return moment().format()
     }
-
-
-
 }
 
 /**
@@ -283,20 +287,11 @@ function kimaiStart(settings, project, activity) {
     return new Promise((resolve, reject) => {
 
         let body = {
-            // begin: moment().format(),
+            // select client or server time according to settings
+            begin = kimaiServerTime(settings),
             project: project,
             activity: activity
         }
-
-        body.begin = kimaiServerTime(settings)
-        // if (settings.serversettings.servertime) {
-        //     kimaiServerTime(settings)
-        //         .then(res => {
-        //             debug('local time: ' + body.begin)
-        //             debug('server time: ' + res.now)
-        //             body.begin = res.now
-        //         })
-        // }
 
         debug("kimaistart calling api: " + body)
 
@@ -308,7 +303,6 @@ function kimaiStart(settings, project, activity) {
                 resolve()
             })
     })
-
 }
 
 /**
