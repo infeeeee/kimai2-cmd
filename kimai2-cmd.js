@@ -287,12 +287,13 @@ function kimaiStart(settings, project, activity) {
     return new Promise((resolve, reject) => {
 
         let body = {
-            // select client or server time according to settings
-            begin = kimaiServerTime(settings),
             project: project,
             activity: activity
         }
 
+        // select client or server time according to settings
+        body.begin = kimaiServerTime(settings)
+        
         debug("kimaistart calling api: " + body)
 
         callKimaiApi('POST', 'timesheets', settings.serversettings, {
