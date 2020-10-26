@@ -7,12 +7,12 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppId={{A10BF7B2-6641-4B06-9C68-268B649FCE57}
 AppName=kimai2-cmd
-AppVersion=1.1.0
+AppVersion=1.2.0
 AppPublisher=infeeeee
 AppPublisherURL=https://github.com/infeeeee/kimai2-cmd
 AppSupportURL=https://github.com/infeeeee/kimai2-cmd
 AppUpdatesURL=https://github.com/infeeeee/kimai2-cmd
-DefaultDirName={pf}\kimai2-cmd
+DefaultDirName={commonpf}\kimai2-cmd
 DefaultGroupName=kimai2-cmd
 AllowNoIcons=yes
 LicenseFile={#SourcePath}\LICENSE
@@ -45,6 +45,7 @@ Filename: "{app}\kimai2-cmd.exe"; Description: "{cm:LaunchProgram,kimai2-cmd}"; 
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "kimaiurl"; String: "{code:GetKimaiUrl}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "username"; String: "{code:GetUserName}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "password"; String: "{code:GetPassword}"; Tasks: createini
+Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "serversettings"; Key: "servertime"; String: "false"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "skindir"; String: "{code:GetRainmeterPath}"; Tasks: createini
 Filename: "{userappdata}\kimai2-cmd\settings.ini"; Section: "rainmeter"; Key: "meterstyle"; String: "styleProjects"; Tasks: createini
 
