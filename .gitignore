@@ -1,4 +1,5 @@
 settings.ini
+settings.ini.old
 node_modules/
 builds/
 *.log
