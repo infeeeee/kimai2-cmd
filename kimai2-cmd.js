@@ -173,6 +173,7 @@ function uiMainMenu(settings) {
                         .then(_ => uiMainMenu(settings))
                     break;
                 case 'stop':
+                    const selected = {}
                     kimaiList(settings, 'timesheets/active', false)
                         .then(res => {
                             if (res[1].length > 0) {
@@ -180,7 +181,13 @@ function uiMainMenu(settings) {
                             }
                         })
                         .then(stopId => {
-                            return kimaiStop(settings, stopId)
+                            selected.id = stopId;
+                            return stopId ? uiEnterDescription () : undefined
+                            
+                        })
+                        .then(res => {
+                            selected.description = res ? res.enterDescription : ''
+                            return kimaiStop(settings, selected.id, selected.description)
                         })
                         .then(res => uiMainMenu(res[0]))
                     break;
@@ -268,7 +275,11 @@ function uiKimaiStart(settings) {
             })
             .then(res => {
                 selected.activityId = res.id
-                return kimaiStart(settings, selected.projectId, selected.activityId)
+                return uiEnterDescription()
+            })
+            .then(res => {
+                selected.description = res.enterDescription
+                return kimaiStart(settings, selected.projectId, selected.activityId, selected.description)
             })
             .then(_ => {
                 resolve()
@@ -283,12 +294,13 @@ function uiKimaiStart(settings) {
  * @param {string} project Id of project
  * @param {string} activity Id of activity
  */
-function kimaiStart(settings, project, activity) {
+function kimaiStart(settings, project, activity, description = null) {
     return new Promise((resolve, reject) => {
 
         let body = {
             project: project,
-            activity: activity
+            activity: activity,
+            description: description
         }
 
         // select client or server time according to settings
@@ -335,10 +347,16 @@ function findId(settings, name, endpoint) {
  * @param {object} settings 
  * @param {string} id 
  */
-function kimaiStop(settings, id = false) {
+function kimaiStop(settings, id = false, description = "") {
     return new Promise((resolve, reject) => {
         if (id) {
-            callKimaiApi('PATCH', 'timesheets/' + id + '/stop', settings.serversettings)
+
+            const body = {
+                description: description
+            }
+            callKimaiApi('PATCH', 'timesheets/' + id + '/stop', settings.serversettings, {
+                reqbody: body
+            })
                 .then(res => {
                     resolve([settings, res])
                 })
@@ -554,6 +572,18 @@ function uiSelectMeasurement(thelist) {
     })
 }
 
+function uiEnterDescription() {
+    return new Promise((resolve, reject) => {
+        inquirer
+            .prompt({
+                type: 'input',
+                name: 'enterDescription',
+                message: 'Description: '
+            }).then(answer => {
+                resolve(answer);
+            });
+    });
+}
 /**
  * Returns a prompt with autocomplete
  * 
