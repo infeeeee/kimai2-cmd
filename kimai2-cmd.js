@@ -299,7 +299,7 @@ function kimaiStart(settings, project, activity) {
 
         let body = {
             project: project,
-            activity: activity,
+            activity: activity
         }
 
         // select client or server time according to settings
