@@ -182,12 +182,16 @@ function uiMainMenu(settings) {
                         })
                         .then(stopId => {
                             selected.id = stopId;
-                            return stopId ? uiEnterDescription () : undefined
-                            
+                            return selected.id ? uiEnterDescription () : undefined
                         })
                         .then(res => {
-                            selected.description = res ? res.enterDescription : ''
-                            return kimaiStop(settings, selected.id, selected.description)
+                            if (res && res.enterDescription)
+                            {
+                                return kimaiSetDescription(settings, selected.id, res.enterDescription)
+                            }
+                        })
+                        .then(res => {
+                            return kimaiStop(settings, selected.id)
                         })
                         .then(res => uiMainMenu(res[0]))
                     break;
@@ -275,11 +279,7 @@ function uiKimaiStart(settings) {
             })
             .then(res => {
                 selected.activityId = res.id
-                return uiEnterDescription()
-            })
-            .then(res => {
-                selected.description = res.enterDescription
-                return kimaiStart(settings, selected.projectId, selected.activityId, selected.description)
+                return kimaiStart(settings, selected.projectId, selected.activityId)
             })
             .then(_ => {
                 resolve()
@@ -294,13 +294,12 @@ function uiKimaiStart(settings) {
  * @param {string} project Id of project
  * @param {string} activity Id of activity
  */
-function kimaiStart(settings, project, activity, description = null) {
+function kimaiStart(settings, project, activity) {
     return new Promise((resolve, reject) => {
 
         let body = {
             project: project,
             activity: activity,
-            description: description
         }
 
         // select client or server time according to settings
@@ -347,16 +346,10 @@ function findId(settings, name, endpoint) {
  * @param {object} settings 
  * @param {string} id 
  */
-function kimaiStop(settings, id = false, description = "") {
+function kimaiStop(settings, id = false) {
     return new Promise((resolve, reject) => {
         if (id) {
-
-            const body = {
-                description: description
-            }
-            callKimaiApi('PATCH', 'timesheets/' + id + '/stop', settings.serversettings, {
-                reqbody: body
-            })
+            callKimaiApi('PATCH', 'timesheets/' + id + '/stop', settings.serversettings)
                 .then(res => {
                     resolve([settings, res])
                 })
@@ -761,6 +754,25 @@ function uiAskForSettings() {
     })
 }
 
+function kimaiSetDescription(settings, id, description)
+{
+    return new Promise((resolve, reject) => {
+
+        let body = {
+            description: description
+        }
+        
+        debug("kimaistart calling api: " + body)
+
+        callKimaiApi('PATCH', 'timesheets/' + id, settings.serversettings, {
+                reqbody: body
+            })
+            .then(res => {
+                console.log('Set description for: ' + res.id)
+                resolve()
+            })
+    })
+}
 
 /**
  * Returns the ini save path based on os and installation type, creates folder if necessary
