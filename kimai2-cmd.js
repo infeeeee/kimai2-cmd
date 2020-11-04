@@ -950,11 +950,12 @@ program.command('restart [id]')
             })
     })
 
-program.command('stop [id]')
-    .description('stop all or selected measurement measurements, [id] is optional')
-    .action(function (measurementId) {
+program.command('stop [id] [description]')
+    .description('stop all or selected measurement measurements, [id] is optional, [description] is optional but needs [id]')
+    .action(function (measurementId, description) {
         checkSettings()
             .then(settings => {
+                kimaiSetDescription(settings, measurementId, description)
                 kimaiStop(settings, measurementId)
             })
     })
