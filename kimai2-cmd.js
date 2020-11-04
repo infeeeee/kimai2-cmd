@@ -182,9 +182,12 @@ function uiMainMenu(settings) {
                         })
                         .then(stopId => {
                             selected.id = stopId;
+
+                            // Only ask for the description if a specific measurement has been selected
                             return selected.id ? uiEnterDescription () : undefined
                         })
                         .then(res => {
+                            // only set the description if one has been prompted and entered
                             if (res && res.enterDescription)
                             {
                                 return kimaiSetDescription(settings, selected.id, res.enterDescription)
@@ -565,6 +568,9 @@ function uiSelectMeasurement(thelist) {
     })
 }
 
+/**
+ * Interactive UI: Prompt the user to enter a description for a measurement.
+ */
 function uiEnterDescription() {
     return new Promise((resolve, reject) => {
         inquirer
@@ -754,6 +760,12 @@ function uiAskForSettings() {
     })
 }
 
+/**
+ * Sets the 'description' field of a measurement. Works on both running and stopped measurements.
+ * @param {object} settings all settings read from the settings file
+ * @param {string} id measurement id
+ * @param {*} description the description that shall be applied to the measurement
+ */
 function kimaiSetDescription(settings, id, description)
 {
     return new Promise((resolve, reject) => {
