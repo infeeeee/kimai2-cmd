@@ -762,7 +762,7 @@ function kimaiSetDescription(settings, id, description)
             description: description
         }
         
-        debug("kimaistart calling api: " + body)
+        debug("kimaiSetDescription calling api: " + body)
 
         callKimaiApi('PATCH', 'timesheets/' + id, settings.serversettings, {
                 reqbody: body
