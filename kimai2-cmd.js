@@ -173,6 +173,7 @@ function uiMainMenu(settings) {
                         .then(_ => uiMainMenu(settings))
                     break;
                 case 'stop':
+                    const selected = {}
                     kimaiList(settings, 'timesheets/active', false)
                         .then(res => {
                             if (res[1].length > 0) {
@@ -180,7 +181,19 @@ function uiMainMenu(settings) {
                             }
                         })
                         .then(stopId => {
-                            return kimaiStop(settings, stopId)
+                            selected.id = stopId;
+
+                            // Only ask for the description if a specific measurement has been selected
+                            return selected.id ? uiEnterDescription() : undefined
+                        })
+                        .then(res => {
+                            // only set the description if one has been prompted and entered
+                            if (res && res.enterDescription) {
+                                return kimaiSetDescription(settings, selected.id, res.enterDescription)
+                            }
+                        })
+                        .then(res => {
+                            return kimaiStop(settings, selected.id)
                         })
                         .then(res => uiMainMenu(res[0]))
                     break;
@@ -293,7 +306,7 @@ function kimaiStart(settings, project, activity) {
 
         // select client or server time according to settings
         body.begin = kimaiServerTime(settings)
-        
+
         debug("kimaistart calling api: " + body)
 
         callKimaiApi('POST', 'timesheets', settings.serversettings, {
@@ -555,6 +568,21 @@ function uiSelectMeasurement(thelist) {
 }
 
 /**
+ * Interactive UI: Prompt the user to enter a description for a measurement.
+ */
+function uiEnterDescription() {
+    return new Promise((resolve, reject) => {
+        inquirer
+            .prompt({
+                type: 'input',
+                name: 'enterDescription',
+                message: 'Description: '
+            }).then(answer => {
+                resolve(answer);
+            });
+    });
+}
+/**
  * Returns a prompt with autocomplete
  * 
  * @param {array} thelist The list of elements to select from
@@ -731,6 +759,30 @@ function uiAskForSettings() {
     })
 }
 
+/**
+ * Sets the 'description' field of a measurement. Works on both running and stopped measurements.
+ * @param {object} settings all settings read from the settings file
+ * @param {string} id measurement id
+ * @param {*} description the description that shall be applied to the measurement
+ */
+function kimaiSetDescription(settings, id, description) {
+    return new Promise((resolve, reject) => {
+
+        let body = {
+            description: description
+        }
+
+        debug("kimaiSetDescription calling api: " + body)
+
+        callKimaiApi('PATCH', 'timesheets/' + id, settings.serversettings, {
+                reqbody: body
+            })
+            .then(res => {
+                console.log('Set description for: ' + res.id)
+                resolve()
+            })
+    })
+}
 
 /**
  * Returns the ini save path based on os and installation type, creates folder if necessary
@@ -908,11 +960,12 @@ program.command('restart [id]')
             })
     })
 
-program.command('stop [id]')
-    .description('stop all or selected measurement measurements, [id] is optional')
-    .action(function (measurementId) {
+program.command('stop [id] [description]')
+    .description('stop all or selected measurement measurements, [id] is optional, [description] is optional but needs [id]')
+    .action(function (measurementId, description) {
         checkSettings()
             .then(settings => {
+                kimaiSetDescription(settings, measurementId, description)
                 kimaiStop(settings, measurementId)
             })
     })

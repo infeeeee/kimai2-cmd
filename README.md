@@ -102,7 +102,7 @@ Options:
 Commands:
   start [project] [activity]  start selected project and activity
   restart [id]                restart selected measurement
-  stop [id]                   stop all or selected measurement measurements, [id] is optional
+  stop [id] [description]     stop all or selected measurement measurements, [id] is optional, [description] is optional but needs [id]
   rainmeter                   update rainmeter skin
   list-active                 list active measurements
   list-recent                 list recent measurements
