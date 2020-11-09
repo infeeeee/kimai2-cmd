@@ -184,12 +184,11 @@ function uiMainMenu(settings) {
                             selected.id = stopId;
 
                             // Only ask for the description if a specific measurement has been selected
-                            return selected.id ? uiEnterDescription () : undefined
+                            return selected.id ? uiEnterDescription() : undefined
                         })
                         .then(res => {
                             // only set the description if one has been prompted and entered
-                            if (res && res.enterDescription)
-                            {
+                            if (res && res.enterDescription) {
                                 return kimaiSetDescription(settings, selected.id, res.enterDescription)
                             }
                         })
@@ -307,7 +306,7 @@ function kimaiStart(settings, project, activity) {
 
         // select client or server time according to settings
         body.begin = kimaiServerTime(settings)
-        
+
         debug("kimaistart calling api: " + body)
 
         callKimaiApi('POST', 'timesheets', settings.serversettings, {
@@ -766,14 +765,13 @@ function uiAskForSettings() {
  * @param {string} id measurement id
  * @param {*} description the description that shall be applied to the measurement
  */
-function kimaiSetDescription(settings, id, description)
-{
+function kimaiSetDescription(settings, id, description) {
     return new Promise((resolve, reject) => {
 
         let body = {
             description: description
         }
-        
+
         debug("kimaiSetDescription calling api: " + body)
 
         callKimaiApi('PATCH', 'timesheets/' + id, settings.serversettings, {
