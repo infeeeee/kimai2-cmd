@@ -74,7 +74,7 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
             options.headers['Content-Type'] = 'application/json'
         }
 
-        debug("request options: " + options)
+        debug("request options: " + options.body)
 
         request(options, (error, response, body) => {
             if (error) {
