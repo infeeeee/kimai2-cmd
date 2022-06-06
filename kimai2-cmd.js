@@ -950,10 +950,10 @@ program.command('start [project] [activity]')
 
                 findId(settings, project, 'projects')
                     .then(projectid => {
-                        selected.projectId = projectid                        
+                        selected.projectId = projectid
                         return findId(settings, activity, 'activities')
                     })
-                    .then(activityid => {                        
+                    .then(activityid => {
                         selected.activityId = activityid
                         return kimaiStart(settings, selected.projectId, selected.activityId)
                     })
