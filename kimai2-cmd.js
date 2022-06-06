@@ -943,7 +943,7 @@ program.command('start [project] [activity]')
         const selected = {}
         checkSettings()
             .then(settings => {
-                if (project && !activity) {
+                if (!project || !activity) {
                     uiKimaiStart(settings, project);
                     return;
                 }
