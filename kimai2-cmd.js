@@ -261,18 +261,22 @@ function kimaiServerTime(settings) {
  * 
  * @param {object} settings All settings read from ini
  */
-function uiKimaiStart(settings) {
+function uiKimaiStart(settings, defaultProject) {
     return new Promise((resolve, reject) => {
         const selected = {}
         kimaiList(settings, 'projects', false)
             .then(res => {
-                return uiAutocompleteSelect(res[1], 'Select project')
+                if (!defaultProject) {
+                    return uiAutocompleteSelect(res[1], 'Select project').then((res) => res.id)
+                } else {
+                    return findId(settings, defaultProject, 'projects').then((projectId) => projectId)
+                }
             })
-            .then(res => {
-                selected.projectId = res.id
+            .then(projectId => {
+                selected.projectId = projectId
                 return kimaiList(settings, 'activities', false, {
                     filter: {
-                        project: res.id
+                        project: projectId
                     }
                 })
             })
@@ -939,16 +943,15 @@ program.command('start [project] [activity]')
         const selected = {}
         checkSettings()
             .then(settings => {
+                if (project && !activity) {
+                    uiKimaiStart(settings, project);
+                    return;
+                }
+
                 findId(settings, project, 'projects')
                     .then(projectid => {
-                        selected.projectId = projectid
-                        
-                        if (activity) {
-                            return findId(settings, activity, 'activities')
-                        } else {
-                            // The user did not provide the activity, ask it interactively.
-                            return readActivity(settings, projectid);
-                        }
+                        selected.projectId = projectid                        
+                        return findId(settings, activity, 'activities')
                     })
                     .then(activityid => {                        
                         selected.activityId = activityid
@@ -956,22 +959,6 @@ program.command('start [project] [activity]')
                     })
             })
     })
-
-function readActivity(settings, projectId) {
-    return new Promise((resolve, reject) => {
-        return kimaiList(settings, 'activities', false, {
-            filter: {
-                project: projectId
-            }
-        })
-        .then(res => {
-            return uiAutocompleteSelect(res[1], "Select activity")
-        })
-        .then(res => {
-            resolve(res.id);
-        })
-    });
-}
 
 program.command('restart [id]')
     .description('restart selected measurement')
