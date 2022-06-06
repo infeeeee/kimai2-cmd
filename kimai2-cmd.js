@@ -942,14 +942,36 @@ program.command('start [project] [activity]')
                 findId(settings, project, 'projects')
                     .then(projectid => {
                         selected.projectId = projectid
-                        return findId(settings, activity, 'activities')
+                        
+                        if (activity) {
+                            return findId(settings, activity, 'activities')
+                        } else {
+                            // The user did not provide the activity, ask it interactively.
+                            return readActivity(settings, projectid);
+                        }
                     })
-                    .then(activityid => {
+                    .then(activityid => {                        
                         selected.activityId = activityid
                         return kimaiStart(settings, selected.projectId, selected.activityId)
                     })
             })
     })
+
+function readActivity(settings, projectId) {
+    return new Promise((resolve, reject) => {
+        return kimaiList(settings, 'activities', false, {
+            filter: {
+                project: projectId
+            }
+        })
+        .then(res => {
+            return uiAutocompleteSelect(res[1], "Select activity")
+        })
+        .then(res => {
+            resolve(res.id);
+        })
+    });
+}
 
 program.command('restart [id]')
     .description('restart selected measurement')
