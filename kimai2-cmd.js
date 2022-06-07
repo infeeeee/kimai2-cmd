@@ -260,6 +260,7 @@ function kimaiServerTime(settings) {
  * Interactive ui: select a project and activity and starts it
  * 
  * @param {object} settings All settings read from ini
+ * @param {string} defaultProject The name of a project. If set, skips the project selection and goes directly to the activity selection.
  */
 function uiKimaiStart(settings, defaultProject) {
     return new Promise((resolve, reject) => {
