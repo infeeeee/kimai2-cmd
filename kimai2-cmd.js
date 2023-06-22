@@ -74,6 +74,16 @@ function callKimaiApi(httpMethod, kimaiMethod, serversettings, options = false) 
             options.headers['Content-Type'] = 'application/json'
         }
 
+	if (typeof serversettings.ca_cert_file !== 'undefined' && serversettings.ca_cert_file !== '') {
+	    if (fs.existsSync(serversettings.ca_cert_file)) {
+                options.agentOptions = {
+                    ca: fs.readFileSync(serversettings.ca_cert_file)
+                };
+	    } else {
+		console.error(`Configured CA cert file ${serversettings.ca_cert_file} does not exist or is not accessible.`);
+	    }
+	}
+    
         debug("request options: " + options.body)
 
         request(options, (error, response, body) => {
@@ -717,7 +727,30 @@ function uiAskForSettings() {
                 type: 'input',
                 name: 'password',
                 message: "API password:"
-            }
+            },
+	    {
+                type: 'confirm',
+		name: 'custom_ca',
+		message: "Do you want to specify a custom certificate authority?",
+		default: false
+	    },
+	    {
+		type: 'input',
+		name: 'ca_cert_file',
+		message: 'Path to CA cert file:',
+		validate: function(input) {
+		    const result = fs.existsSync(input)
+		    if (result === false)
+                    {
+                        console.log('\nFile does not exist or is not accessible.')
+		    }
+		    return result;
+		},
+		default: null,
+		when: function(hash) {
+		    return hash.custom_ca;
+		}
+	    }
         ]
 
         inquirer
@@ -1021,6 +1054,15 @@ program.command('url')
         checkSettings()
             .then(settings => {
                 console.log(settings.serversettings.kimaiurl)
+            })
+    })
+
+program.command('config')
+    .description('configure kimai2-cmd')
+    .action(function() {
+	checkSettings()
+	    .then(settings => {
+		 uiAskForSettings()
             })
     })
 
