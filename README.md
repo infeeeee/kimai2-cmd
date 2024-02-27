@@ -1,3 +1,11 @@
+**⚠️ UNMAINTAINED ⚠️**
+
+PRs will be accepted, but issues won't be fixed.
+
+Alternative maintained clients: 
+- [Kimai-console](https://github.com/kevinpapst/kimai2-console): Another cli app
+- [Kemai](https://github.com/AlexandrePTJ/kemai): Graphical client
+
 # Kimai2-cmd
 
 Command line client for [Kimai2](https://www.kimai.org/), the open source, self-hosted time tracker.
