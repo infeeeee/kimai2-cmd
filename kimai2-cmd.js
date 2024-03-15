@@ -270,19 +270,24 @@ function kimaiServerTime(settings) {
  * Interactive ui: select a project and activity and starts it
  * 
  * @param {object} settings All settings read from ini
+ * @param {string} defaultProject The name of a project. If set, skips the project selection and goes directly to the activity selection.
  */
-function uiKimaiStart(settings) {
+function uiKimaiStart(settings, defaultProject) {
     return new Promise((resolve, reject) => {
         const selected = {}
         kimaiList(settings, 'projects', false)
             .then(res => {
-                return uiAutocompleteSelect(res[1], 'Select project')
+                if (!defaultProject) {
+                    return uiAutocompleteSelect(res[1], 'Select project').then((res) => res.id)
+                } else {
+                    return findId(settings, defaultProject, 'projects').then((projectId) => projectId)
+                }
             })
-            .then(res => {
-                selected.projectId = res.id
+            .then(projectId => {
+                selected.projectId = projectId
                 return kimaiList(settings, 'activities', false, {
                     filter: {
-                        project: res.id
+                        project: projectId
                     }
                 })
             })
@@ -972,6 +977,11 @@ program.command('start [project] [activity]')
         const selected = {}
         checkSettings()
             .then(settings => {
+                if (!project || !activity) {
+                    uiKimaiStart(settings, project);
+                    return;
+                }
+
                 findId(settings, project, 'projects')
                     .then(projectid => {
                         selected.projectId = projectid
